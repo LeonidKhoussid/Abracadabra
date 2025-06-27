@@ -1,13 +1,122 @@
+import React, { useState, useRef } from 'react';
+
+const cities = [
+  'Краснодар',
+  'Москва',
+  'Ростов-на-Дону',
+  'Саратов',
+  'Волгоград',
+  'Кисловодск',
+  'Сочи',
+  'Анапа',
+];
+
+const MODES = [
+  { label: 'Купить', value: 'buy' },
+  { label: 'Ипотека', value: 'mortgage' },
+  { label: 'Рассрочка', value: 'installment' },
+];
+
 export default function HeroSection() {
+  const [city, setCity] = useState('Краснодар');
+  const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState('buy');
+  const dropdownRef = useRef(null);
+
+  // Закрытие dropdown при клике вне
+  function handleClickOutside(e) {
+    if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      setOpen(false);
+    }
+  }
+  // Навешиваем слушатель на документ
+  React.useEffect(() => {
+    if (open) document.addEventListener('mousedown', handleClickOutside);
+    else document.removeEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
   return (
-    <section className="flex flex-col md:flex-row items-center justify-between px-8 py-12 bg-gradient-to-r from-blue-100 to-white">
-      <div>
-        <h1 className="text-5xl font-bold text-blue-700 mb-4">Ищете дом?<br /><span className="text-blue-500">Начните с Домли</span></h1>
-        <p className="text-lg text-gray-600 mb-6">Ваш уютный уголок ближе, чем вы думаете</p>
-        {/* FilterBar will be placed here */}
+    <section
+      className="hero-section"
+      style={{ fontFamily: 'Nunito, sans-serif' }}
+    >
+      {/* Левая часть */}
+      <div className="hero-section__left">
+        <h1 className="hero-section__title">
+          Ищете дом?
+        </h1>
+        <h2 className="hero-section__subtitle">
+          Начните с <span className="hero-section__subtitle--accent">Домли</span>
+        </h2>
+        <p className="hero-section__desc">
+          Ваш уютный уголок ближе, чем вы думаете
+        </p>
+        {/* Фильтры и кнопки */}
+        <div className="hero-section__filters">
+          <div className="hero-section__switch-group">
+            {MODES.map((btn) => (
+              <button
+                key={btn.value}
+                className={`btn-switch${mode === btn.value ? ' btn-switch--active' : ''}`}
+                onClick={() => setMode(btn.value)}
+                type="button"
+              >
+                {btn.label}
+              </button>
+            ))}
+          </div>
+          <div className="hero-section__select-group">
+            <select className="hero-section__select">
+              <option>Застройщик</option>
+            </select>
+            <select className="hero-section__select">
+              <option>Комнатность</option>
+            </select>
+            <select className="hero-section__select">
+              <option>Цена</option>
+            </select>
+            <select className="hero-section__select">
+              <option>Сроки</option>
+            </select>
+            <button className="hero-section__find-btn">Найти</button>
+          </div>
+        </div>
       </div>
-      <div className="hidden md:block w-1/2">
-        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80" alt="ЖК" className="rounded-2xl shadow-lg w-full h-auto object-cover" />
+      {/* Правая часть */}
+      <div className="hero-section__right">
+        {/* Dropdown и кнопка Войти */}
+        <div className="hero-section__city-login">
+          <div ref={dropdownRef} className="hero-section__dropdown">
+            <button
+              className="hero-section__city-btn"
+              onClick={() => setOpen((v) => !v)}
+              type="button"
+            >
+              {city}
+              <svg className={`hero-section__city-arrow${open ? ' hero-section__city-arrow--open' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            {open && (
+              <div className="hero-section__city-list">
+                {cities.map((c) => (
+                  <div
+                    key={c}
+                    className={`hero-section__city-item${c === city ? ' hero-section__city-item--active' : ''}`}
+                    onClick={() => { setCity(c); setOpen(false); }}
+                  >
+                    {c}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <button className="hero-section__login-btn">Войти</button>
+        </div>
+        <img
+          src="src/assets/firstBlockImg.png"
+          alt="ЖК Домли"
+          className="hero-section__img"
+        />
       </div>
     </section>
   );
