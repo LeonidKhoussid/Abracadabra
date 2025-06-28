@@ -155,6 +155,50 @@ router.get('/map-data', async (req, res) => {
   }
 });
 
+// @route   GET /api/properties/csv
+// @desc    Get all properties from CSV
+// @access  Public
+router.get('/csv', async (req, res) => {
+  try {
+    const properties = [];
+    const csvPath = path.join(__dirname, '../data/properties.csv');
+    
+    // Check if CSV file exists
+    if (!fs.existsSync(csvPath)) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Properties CSV file not found' 
+      });
+    }
+
+    // Read and parse CSV
+    fs.createReadStream(csvPath)
+      .pipe(csv())
+      .on('data', (row) => {
+        properties.push(row);
+      })
+      .on('end', () => {
+        res.json(properties);
+      })
+      .on('error', (error) => {
+        console.error('Error reading CSV:', error);
+        res.status(500).json({ 
+          success: false, 
+          message: 'Error reading properties data',
+          error: error.message 
+        });
+      });
+
+  } catch (error) {
+    console.error('Error in /csv endpoint:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error',
+      error: error.message 
+    });
+  }
+});
+
 // @route   GET /api/properties
 // @desc    Get properties with filters
 // @access  Public

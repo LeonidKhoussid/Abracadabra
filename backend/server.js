@@ -12,6 +12,7 @@ import { dirname, join } from 'path';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import propertyRoutes from './routes/properties.js';
+import photoRoutes from './routes/photos.js';
 
 // Import database connection
 import { pool } from './config/database.js';
@@ -101,6 +102,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/properties', propertyRoutes);
+app.use('/api/photos', photoRoutes);
 
 // API documentation endpoint
 app.get('/api', (req, res) => {
