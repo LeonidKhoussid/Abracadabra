@@ -16,8 +16,11 @@ const RegistrationForm = () => {
     // Additional questions
     propertyType: '',
     rooms: '',
+    roomsCustom: '',
     area: '',
+    areaCustom: '',
     budget: '',
+    budgetCustom: '',
     moveInDate: '',
     livingWith: ''
   });
@@ -45,6 +48,42 @@ const RegistrationForm = () => {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const handleRadioChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      // Clear custom field when selecting predefined option
+      [`${name}Custom`]: ''
+    }));
+    
+    // Clear error when user makes selection
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const handleCustomInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      // Clear radio selection when typing custom value
+      [name.replace('Custom', '')]: ''
     }));
     
     // Clear error when user starts typing
@@ -88,8 +127,8 @@ const RegistrationForm = () => {
     }
     
     if (!formData.phone) newErrors.phone = 'Телефон обязателен';
-    else if (!/^\+7\s?\(\d{3}\)\s?\d{3}-\d{2}-\d{2}$/.test(formData.phone)) {
-      newErrors.phone = 'Телефон должен быть в формате +7 (999) 123-45-67';
+    else if (!/^\d+$/.test(formData.phone)) {
+      newErrors.phone = 'Телефон должен содержать только цифры';
     }
 
     setErrors(newErrors);
@@ -104,15 +143,15 @@ const RegistrationForm = () => {
       newErrors.propertyType = 'Неверный тип недвижимости';
     }
     
-    if (!formData.budget) newErrors.budget = 'Выберите бюджет';
+    if (!formData.budget && !formData.budgetCustom) newErrors.budget = 'Выберите бюджет или укажите свой';
     if (!formData.moveInDate) newErrors.moveInDate = 'Выберите срок заезда';
     if (!formData.livingWith) newErrors.livingWith = 'Выберите с кем будете жить';
 
     // Validate rooms/area based on property type
     if (formData.propertyType === 'apartment' || formData.propertyType === 'penthouse') {
-      if (!formData.rooms) newErrors.rooms = 'Выберите количество комнат';
+      if (!formData.rooms && !formData.roomsCustom) newErrors.rooms = 'Выберите количество комнат или укажите свое';
     } else if (formData.propertyType === 'commercial') {
-      if (!formData.area) newErrors.area = 'Выберите площадь';
+      if (!formData.area && !formData.areaCustom) newErrors.area = 'Выберите площадь или укажите свою';
     }
 
     setErrors(newErrors);
@@ -142,9 +181,9 @@ const RegistrationForm = () => {
         phone: formData.phone,
         password: formData.password,
         propertyType: formData.propertyType,
-        rooms: formData.rooms || null,
-        area: formData.area || null,
-        budget: formData.budget,
+        rooms: formData.rooms || formData.roomsCustom || null,
+        area: formData.area || formData.areaCustom || null,
+        budget: formData.budget || formData.budgetCustom,
         moveInDate: formData.moveInDate,
         livingWith: formData.livingWith
       };
@@ -246,7 +285,7 @@ const RegistrationForm = () => {
           className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
             errors.phone ? 'border-red-500' : 'border-gray-300'
           }`}
-          placeholder="+7 (999) 123-45-67"
+          placeholder="Введите номер телефона (только цифры)"
           disabled={isSubmitting}
         />
         {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
@@ -339,12 +378,37 @@ const RegistrationForm = () => {
                   name="budget"
                   value={option.value}
                   checked={formData.budget === option.value}
-                  onChange={handleInputChange}
+                  onChange={handleRadioChange}
                   className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                 />
                 <span className="text-gray-700">{option.label}</span>
               </label>
             ))}
+            {/* Custom budget input */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="budget"
+                  value="custom"
+                  checked={formData.budget === 'custom' || formData.budgetCustom}
+                  onChange={handleRadioChange}
+                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="text-gray-700">Другой бюджет:</span>
+              </label>
+              <input
+                type="text"
+                name="budgetCustom"
+                value={formData.budgetCustom}
+                onChange={handleCustomInputChange}
+                placeholder="Например: 25 млн ₽"
+                className={`mt-2 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.budget ? 'border-red-500' : 'border-gray-300'
+                }`}
+                disabled={isSubmitting}
+              />
+            </div>
           </div>
           {errors.budget && <p className="text-red-500 text-sm mt-1">{errors.budget}</p>}
         </div>
@@ -367,12 +431,37 @@ const RegistrationForm = () => {
                   name="rooms"
                   value={option.value}
                   checked={formData.rooms === option.value}
-                  onChange={handleInputChange}
+                  onChange={handleRadioChange}
                   className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                 />
                 <span className="text-gray-700">{option.label}</span>
               </label>
             ))}
+          </div>
+          {/* Custom rooms input */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="radio"
+                name="rooms"
+                value="custom"
+                checked={formData.rooms === 'custom' || formData.roomsCustom}
+                onChange={handleRadioChange}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="text-gray-700">Другое количество комнат:</span>
+            </label>
+            <input
+              type="text"
+              name="roomsCustom"
+              value={formData.roomsCustom}
+              onChange={handleCustomInputChange}
+              placeholder="Например: 5 комнат"
+              className={`mt-2 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.rooms ? 'border-red-500' : 'border-gray-300'
+              }`}
+              disabled={isSubmitting}
+            />
           </div>
           {errors.rooms && <p className="text-red-500 text-sm mt-1">{errors.rooms}</p>}
         </div>
@@ -394,12 +483,37 @@ const RegistrationForm = () => {
                   name="area"
                   value={option.value}
                   checked={formData.area === option.value}
-                  onChange={handleInputChange}
+                  onChange={handleRadioChange}
                   className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                 />
                 <span className="text-gray-700">{option.label}</span>
               </label>
             ))}
+          </div>
+          {/* Custom area input */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="radio"
+                name="area"
+                value="custom"
+                checked={formData.area === 'custom' || formData.areaCustom}
+                onChange={handleRadioChange}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="text-gray-700">Другая площадь:</span>
+            </label>
+            <input
+              type="text"
+              name="areaCustom"
+              value={formData.areaCustom}
+              onChange={handleCustomInputChange}
+              placeholder="Например: 150 м²"
+              className={`mt-2 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.area ? 'border-red-500' : 'border-gray-300'
+              }`}
+              disabled={isSubmitting}
+            />
           </div>
           {errors.area && <p className="text-red-500 text-sm mt-1">{errors.area}</p>}
         </div>

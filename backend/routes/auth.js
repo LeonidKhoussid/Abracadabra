@@ -29,8 +29,8 @@ const registerValidation = [
     .withMessage('Введите корректный email адрес'),
   
   body('phone')
-    .matches(/^\+7\s?\(\d{3}\)\s?\d{3}-\d{2}-\d{2}$/)
-    .withMessage('Телефон должен быть в формате +7 (999) 123-45-67'),
+    .matches(/^\d+$/)
+    .withMessage('Телефон должен содержать только цифры'),
   
   body('password')
     .isLength({ min: 6 })
