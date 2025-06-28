@@ -94,3 +94,10 @@
 2025-06-28T14:02:36: ✅ Database connected successfully
 2025-06-28T14:02:36: 📦 Connected to PostgreSQL database
 2025-06-28T14:02:36: ✅ Database connected successfully
+2025-06-28T14:23:09: 📦 Connected to PostgreSQL database
+2025-06-28T14:23:09: ✅ Database connected successfully
+2025-06-28T14:23:09: 🚀 Server running on port 3000
+2025-06-28T14:23:09: 📊 Environment: development
+2025-06-28T14:23:09: 🔗 Health check: http://localhost:3000/health
+2025-06-28T14:23:09: 📚 API docs: http://localhost:3000/api
+2025-06-28T14:23:47: [0mGET /health [32m200[0m 2.612 ms - 112[0m

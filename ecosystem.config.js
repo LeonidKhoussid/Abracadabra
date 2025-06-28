@@ -10,7 +10,14 @@ module.exports = {
       max_memory_restart: '1G',
       env: {
         NODE_ENV: 'development',
-        PORT: 3000
+        PORT: 3000,
+        DB_HOST: 'localhost',
+        DB_PORT: 5432,
+        DB_NAME: 'domli_db',
+        DB_USER: 'postgres',
+        DB_PASSWORD: 'password',
+        JWT_SECRET: 'your_super_secret_jwt_key_change_this_in_production',
+        JWT_EXPIRES_IN: '7d'
       },
       env_production: {
         NODE_ENV: 'production',
