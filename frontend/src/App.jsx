@@ -4,6 +4,7 @@ import MainPage from './pages/mainPage';
 import LoginPage from './pages/LoginPage';
 import PhotoManagement from './pages/PhotoManagement';
 import PropertyDetail from './pages/PropertyDetail';
+import ProfilePage from './pages/ProfilePage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -25,10 +26,18 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<MainPage />} />
+                    <Route path="/" element={<MainPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/photos" element={<PhotoManagement />} />
-                      <Route path="/property/:id" element={<PropertyDetail />} />
+          <Route path="/property/:id" element={<PropertyDetail />} />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } 
+          />
           <Route 
             path="/dashboard" 
             element={

@@ -1,17 +1,4 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
-
-const cities = [
-  'Краснодар',
-  'Москва',
-  'Ростов-на-Дону',
-  'Саратов',
-  'Волгоград',
-  'Кисловодск',
-  'Сочи',
-  'Анапа',
-];
+import React, { useState } from 'react';
 
 const MODES = [
   { label: 'Купить', value: 'buy' },
@@ -20,33 +7,7 @@ const MODES = [
 ];
 
 export default function HeroSection() {
-  const [city, setCity] = useState('Краснодар');
-  const [open, setOpen] = useState(false);
   const [mode, setMode] = useState('buy');
-  const dropdownRef = useRef(null);
-  const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
-
-  // Закрытие dropdown при клике вне
-  function handleClickOutside(e) {
-    if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-      setOpen(false);
-    }
-  }
-  // Навешиваем слушатель на документ
-  React.useEffect(() => {
-    if (open) document.addEventListener('mousedown', handleClickOutside);
-    else document.removeEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [open]);
-
-  const handleLoginClick = () => {
-    navigate('/login');
-  };
-
-  const handleDashboardClick = () => {
-    navigate('/dashboard');
-  };
 
   return (
     <section
@@ -97,47 +58,6 @@ export default function HeroSection() {
       </div>
       {/* Правая часть */}
       <div className="hero-section__right">
-        {/* Dropdown и кнопка Войти/Личный кабинет */}
-        <div className="hero-section__city-login">
-          <div ref={dropdownRef} className="hero-section__dropdown">
-            <button
-              className="hero-section__city-btn"
-              onClick={() => setOpen((v) => !v)}
-              type="button"
-            >
-              {city}
-              <svg className={`hero-section__city-arrow${open ? ' hero-section__city-arrow--open' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-            </button>
-            {open && (
-              <div className="hero-section__city-list">
-                {cities.map((c) => (
-                  <div
-                    key={c}
-                    className={`hero-section__city-item${c === city ? ' hero-section__city-item--active' : ''}`}
-                    onClick={() => { setCity(c); setOpen(false); }}
-                  >
-                    {c}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          {!isAuthenticated ? (
-            <button 
-              className="hero-section__login-btn"
-              onClick={handleLoginClick}
-            >
-              Войти
-            </button>
-          ) : (
-            <button 
-              className="hero-section__login-btn"
-              onClick={handleDashboardClick}
-            >
-              Личный кабинет
-            </button>
-          )}
-        </div>
         <img
           src="src/assets/firstBlockImg.png"
           alt="ЖК Домли"

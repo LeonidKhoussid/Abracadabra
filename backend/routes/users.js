@@ -1,5 +1,6 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
+import bcrypt from 'bcryptjs';
 import { query } from '../config/database.js';
 import { verifyToken } from '../middleware/auth.js';
 
@@ -68,21 +69,28 @@ const updateProfileValidation = [
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('Имя должно содержать от 2 до 50 символов')
-    .matches(/^[а-яёА-ЯЁ\s-]+$/)
-    .withMessage('Имя может содержать только русские буквы, пробелы и дефисы'),
+    .matches(/^[а-яёА-ЯЁa-zA-Z\s-]+$/)
+    .withMessage('Имя может содержать только буквы, пробелы и дефисы'),
   
   body('lastName')
     .optional()
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('Фамилия должна содержать от 2 до 50 символов')
-    .matches(/^[а-яёА-ЯЁ\s-]+$/)
-    .withMessage('Фамилия может содержать только русские буквы, пробелы и дефисы'),
+    .matches(/^[а-яёА-ЯЁa-zA-Z\s-]+$/)
+    .withMessage('Фамилия может содержать только буквы, пробелы и дефисы'),
+  
+  body('email')
+    .optional()
+    .trim()
+    .isEmail()
+    .withMessage('Введите корректный email адрес')
+    .normalizeEmail(),
   
   body('phone')
     .optional()
-    .matches(/^\d+$/)
-    .withMessage('Телефон должен содержать только цифры')
+    .matches(/^[\d\s\-\+\(\)]+$/)
+    .withMessage('Телефон содержит недопустимые символы')
 ];
 
 // @route   PUT /api/users/profile
@@ -93,6 +101,7 @@ router.put('/profile', updateProfileValidation, async (req, res) => {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Profile validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Ошибка валидации',
@@ -100,7 +109,7 @@ router.put('/profile', updateProfileValidation, async (req, res) => {
       });
     }
 
-    const { firstName, lastName, phone } = req.body;
+    const { firstName, lastName, email, phone } = req.body;
 
     // Build update query dynamically
     const updateFields = [];
@@ -116,6 +125,12 @@ router.put('/profile', updateProfileValidation, async (req, res) => {
     if (lastName) {
       updateFields.push(`last_name = $${paramCount}`);
       values.push(lastName);
+      paramCount++;
+    }
+
+    if (email) {
+      updateFields.push(`email = $${paramCount}`);
+      values.push(email);
       paramCount++;
     }
 
@@ -148,6 +163,7 @@ router.put('/profile', updateProfileValidation, async (req, res) => {
     }
 
     const user = updateResult.rows[0];
+    console.log('✅ Profile updated for user:', user.id);
 
     res.json({
       success: true,
@@ -180,23 +196,28 @@ router.put('/profile', updateProfileValidation, async (req, res) => {
 const updatePreferencesValidation = [
   body('propertyType')
     .optional()
-    .isIn(['apartment', 'penthouse', 'commercial'])
+    .isIn(['apartment', 'house', 'penthouse', 'commercial', 'land'])
     .withMessage('Неверный тип недвижимости'),
+  
+  body('rooms')
+    .optional()
+    .isInt({ min: 0, max: 10 })
+    .withMessage('Количество комнат должно быть числом от 0 до 10'),
   
   body('budget')
     .optional()
-    .notEmpty()
-    .withMessage('Выберите бюджет'),
+    .isString()
+    .withMessage('Бюджет должен быть строкой'),
   
   body('moveInDate')
     .optional()
-    .notEmpty()
-    .withMessage('Выберите срок заезда'),
+    .isString()
+    .withMessage('Срок заезда должен быть строкой'),
   
   body('livingWith')
     .optional()
-    .notEmpty()
-    .withMessage('Выберите с кем будете жить')
+    .isString()
+    .withMessage('Поле "с кем будете жить" должно быть строкой')
 ];
 
 // @route   PUT /api/users/preferences
@@ -207,6 +228,7 @@ router.put('/preferences', updatePreferencesValidation, async (req, res) => {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Preferences validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Ошибка валидации',
@@ -223,17 +245,19 @@ router.put('/preferences', updatePreferencesValidation, async (req, res) => {
       livingWith
     } = req.body;
 
-    // Check if preferences exist
+    // Check if preferences exist, create if they don't
     const existingPreferences = await query(
       'SELECT id FROM user_preferences WHERE user_id = $1',
       [req.user.id]
     );
 
     if (existingPreferences.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Предпочтения пользователя не найдены'
-      });
+      // Create default preferences for user
+      await query(
+        `INSERT INTO user_preferences (user_id, property_type, budget, move_in_date, living_with)
+         VALUES ($1, 'apartment', 'до 3 млн', 'в течение года', 'один')`,
+        [req.user.id]
+      );
     }
 
     // Build update query dynamically
@@ -278,9 +302,18 @@ router.put('/preferences', updatePreferencesValidation, async (req, res) => {
     }
 
     if (updateFields.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Не указаны поля для обновления'
+      // Get current preferences to return
+      const currentPreferences = await query(
+        'SELECT * FROM user_preferences WHERE user_id = $1',
+        [req.user.id]
+      );
+      
+      return res.json({
+        success: true,
+        message: 'Нет полей для обновления',
+        data: {
+          preferences: currentPreferences.rows[0] || null
+        }
       });
     }
 
@@ -305,6 +338,90 @@ router.put('/preferences', updatePreferencesValidation, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Ошибка сервера при обновлении предпочтений'
+    });
+  }
+});
+
+// Change password validation
+const changePasswordValidation = [
+  body('currentPassword')
+    .notEmpty()
+    .withMessage('Текущий пароль обязателен'),
+  
+  body('newPassword')
+    .isLength({ min: 6 })
+    .withMessage('Новый пароль должен содержать минимум 6 символов'),
+  
+  body('confirmPassword')
+    .custom((value, { req }) => {
+      if (value !== req.body.newPassword) {
+        throw new Error('Пароли не совпадают');
+      }
+      return true;
+    })
+];
+
+// @route   PUT /api/users/change-password
+// @desc    Change user password
+// @access  Private
+router.put('/change-password', changePasswordValidation, async (req, res) => {
+  try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ошибка валидации',
+        errors: errors.array()
+      });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    // Get current user with password hash
+    const userResult = await query(
+      'SELECT id, password_hash FROM users WHERE id = $1',
+      [req.user.id]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Пользователь не найден'
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Неверный текущий пароль'
+      });
+    }
+
+    // Hash new password
+    const saltRounds = 12;
+    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update password
+    await query(
+      'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+      [hashedNewPassword, req.user.id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Пароль успешно изменен'
+    });
+
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка сервера при изменении пароля'
     });
   }
 });
