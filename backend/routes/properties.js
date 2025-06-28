@@ -1,11 +1,159 @@
 import express from 'express';
 import { query } from '../config/database.js';
 import { optionalAuth } from '../middleware/auth.js';
+import fs from 'fs';
+import csv from 'csv-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
 // Apply optional auth middleware to all routes
 router.use(optionalAuth);
+
+// Real locations in Krasnodar for different districts/projects
+const krasnodarLocations = {
+  // Central district (центр)
+  'Режиссёр': [45.0355, 38.9753], // ул. Старокубанская
+  'The Grand Palace': [45.0400, 38.9800], // ул.Уральская
+  'Сердце': [45.0320, 38.9720], // ул. Школьная
+  
+  // Karasunsky district (карасунский район)
+  'Небо': [45.0500, 39.0100], // ул. Ярославская
+  'Новелла': [45.0450, 39.0050], // ул.Питерская
+  'Смородина': [45.0520, 39.0120], // ул. Владимира Жириновского
+  
+  // Zapadny district (западный район)
+  'Сегодня': [45.0200, 38.9500], // ул. Ветеранов
+  'Дыхание': [45.0180, 38.9450], // ул. Летчика Позднякова
+  'Фонтаны': [45.0350, 38.9750], // ул. Старокубанская
+  
+  // Prikubansky district (прикубанский район)
+  'REEDS': [45.0600, 39.0200], // ул. Николая Огурцова
+  'DOGMA PARK': [45.0580, 39.0180], // ул. Марины Цветаевой
+  'Квартал САМОЛЁТ': [45.0620, 39.0220], // ул. им. Ивана Беличенко
+  'МКР САМОЛЁТ': [45.0625, 39.0225], // ул. Ивана Беличенко
+  'Рекорд2': [45.0300, 38.9600], // ул. Новороссийская
+  'ПАРК ПОБЕДЫ': [45.0280, 38.9580], // ул. им. Героя Пешкова
+  
+  // Festivalny district (фестивальный район)
+  'Все Свои VIP': [45.0100, 38.9300], // ул. Колхозная
+  'Все Свои Vip': [45.0100, 38.9300], // ул. Колхозная
+  'Тёплые края': [45.0120, 38.9320], // ул. им. Александра Гикало
+  
+  // Yuzhny district (южный район)
+  'Южане': [45.0000, 38.9200], // ул. им. Даниила Смоляна
+  'Айвазовский': [45.0350, 38.9750], // ул. Старокубанская
+  
+  // Yablonovsky (пгт. Яблоновский)
+  'Традиции': [45.0800, 38.9000] // пгт. Яблоновский
+};
+
+// Function to get coordinates for a project
+const getProjectCoordinates = (projectName, developer, index) => {
+  // Try exact project match first
+  if (krasnodarLocations[projectName]) {
+    const baseCoords = krasnodarLocations[projectName];
+    // Add small random offset to avoid overlapping markers
+    const offsetLat = (Math.random() - 0.5) * 0.002; // ~200m radius
+    const offsetLng = (Math.random() - 0.5) * 0.003;
+    return [baseCoords[0] + offsetLat, baseCoords[1] + offsetLng];
+  }
+  
+  // Fallback to developer-based location
+  const developerAreas = {
+    'Ava Dom': [45.0350, 38.9750],     // Central
+    'ССК': [45.0200, 38.9500],         // West
+    'DOGMA': [45.0600, 39.0200],       // East
+    'СЕМЬЯ': [45.0100, 38.9300],       // South
+    'НЕОМЕТРИЯ': [45.0000, 38.9200]    // South
+  };
+  
+  const baseCoords = developerAreas[developer] || [45.0355, 38.9753]; // Default to city center
+  const offsetLat = (Math.random() - 0.5) * 0.01; // Larger area for fallback
+  const offsetLng = (Math.random() - 0.5) * 0.015;
+  return [baseCoords[0] + offsetLat, baseCoords[1] + offsetLng];
+};
+
+// Get all properties from CSV
+router.get('/map-data', async (req, res) => {
+  try {
+    const properties = [];
+    const csvPath = path.join(__dirname, '../data/properties.csv');
+    
+    // Check if CSV file exists
+    if (!fs.existsSync(csvPath)) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Properties CSV file not found' 
+      });
+    }
+
+    // Read and parse CSV
+    fs.createReadStream(csvPath)
+      .pipe(csv())
+      .on('data', (row, index) => {
+        // Skip rows with invalid or missing price
+        if (!row.price_total || row.price_total.includes('*')) {
+          return;
+        }
+
+        // Parse price (remove commas and convert to number)
+        const priceString = row.price_total.replace(/,/g, '');
+        const price = parseFloat(priceString);
+        const formattedPrice = price ? `${(price / 1000000).toFixed(1)} млн ₽` : 'Цена по запросу';
+
+        // Get realistic coordinates based on project and developer
+        const coordinates = getProjectCoordinates(row.project_name, row.developer_name, properties.length);
+
+        // Use the actual address from CSV
+        const address = row.address || 'г. Краснодар';
+
+        // Create property object
+        const property = {
+          id: properties.length + 1,
+          name: `ЖК ${row.project_name}`,
+          address: address,
+          price: `от ${formattedPrice}`,
+          coordinates: coordinates,
+          type: row.property_type || 'Недвижимость',
+          developer: row.developer_name,
+          project: row.project_name,
+          rooms: row.rooms_count || 'Не указано',
+          area: row.area ? `${row.area} м²` : 'Не указана',
+          completion: row.completion_year || 'Не указан'
+        };
+
+        properties.push(property);
+      })
+      .on('end', () => {
+        res.json({
+          success: true,
+          data: properties,
+          count: properties.length
+        });
+      })
+      .on('error', (error) => {
+        console.error('Error reading CSV:', error);
+        res.status(500).json({ 
+          success: false, 
+          message: 'Error reading properties data',
+          error: error.message 
+        });
+      });
+
+  } catch (error) {
+    console.error('Error in /map-data endpoint:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error',
+      error: error.message 
+    });
+  }
+});
 
 // @route   GET /api/properties
 // @desc    Get properties with filters
