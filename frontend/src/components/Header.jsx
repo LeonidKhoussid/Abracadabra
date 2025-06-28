@@ -12,6 +12,7 @@ export default function Header() {
       <nav className="flex gap-4 md:gap-8 items-center">
         <a href="#" className="text-blue-700 font-bold text-base md:text-lg">Новостройки</a>
         <a href="#" className="text-blue-700 font-bold text-base md:text-lg">Ипотека</a>
+        <Link to="/photos" className="text-blue-700 font-bold text-base md:text-lg">📸 Фото</Link>
       </nav>
     </header>
   );

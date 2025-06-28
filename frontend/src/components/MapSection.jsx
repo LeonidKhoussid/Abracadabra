@@ -21,7 +21,7 @@ export default function MapSection() {
   useEffect(() => {
     const loadPropertiesFromAPI = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/properties/map-data');
+        const response = await fetch('/api/properties/map-data');
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

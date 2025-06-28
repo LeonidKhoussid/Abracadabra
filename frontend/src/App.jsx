@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import MainPage from './pages/mainPage';
 import LoginPage from './pages/LoginPage';
+import PhotoManagement from './pages/PhotoManagement';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -25,6 +26,7 @@ function App() {
         <Routes>
           <Route path="/" element={<MainPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/photos" element={<PhotoManagement />} />
           <Route 
             path="/dashboard" 
             element={
