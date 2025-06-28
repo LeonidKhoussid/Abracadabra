@@ -1,7 +1,7 @@
 import Header from '../components/Header';
+import CarouselBlock from '../components/CarouselBlock';
 import HeroSection from '../components/HeroSection';
 import Recommendations from '../components/Recommendations';
-import SmartBanner from '../components/SmartBanner';
 import MapSection from '../components/MapSection';
 import AssociationMembers from '../components/AssociationMembers';
 import Footer from '../components/Footer';
@@ -12,7 +12,7 @@ function MainPage() {
       <Header />
       <HeroSection />
       <Recommendations />
-      <SmartBanner />
+      <CarouselBlock />
       <MapSection />
       <AssociationMembers />
       <Footer />
