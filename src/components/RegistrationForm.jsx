@@ -1,0 +1,427 @@
+import React, { useState } from 'react';
+
+const RegistrationForm = () => {
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({
+    // Registration fields
+    email: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    
+    // Additional questions
+    propertyType: '',
+    rooms: '',
+    area: '',
+    budget: '',
+    moveInDate: '',
+    livingWith: ''
+  });
+
+  const [errors, setErrors] = useState({});
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateStep1 = () => {
+    const newErrors = {};
+    
+    if (!formData.email) newErrors.email = 'Email обязателен';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Введите корректный email';
+    
+    if (!formData.password) newErrors.password = 'Пароль обязателен';
+    else if (formData.password.length < 6) newErrors.password = 'Пароль должен содержать минимум 6 символов';
+    
+    if (!formData.confirmPassword) newErrors.confirmPassword = 'Подтвердите пароль';
+    else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Пароли не совпадают';
+    
+    if (!formData.firstName) newErrors.firstName = 'Имя обязательно';
+    if (!formData.lastName) newErrors.lastName = 'Фамилия обязательна';
+    if (!formData.phone) newErrors.phone = 'Телефон обязателен';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const newErrors = {};
+    
+    if (!formData.propertyType) newErrors.propertyType = 'Выберите тип недвижимости';
+    if (!formData.budget) newErrors.budget = 'Выберите бюджет';
+    if (!formData.moveInDate) newErrors.moveInDate = 'Выберите срок заезда';
+    if (!formData.livingWith) newErrors.livingWith = 'Выберите с кем будете жить';
+
+    // Validate rooms/area based on property type
+    if (formData.propertyType === 'apartment' || formData.propertyType === 'penthouse') {
+      if (!formData.rooms) newErrors.rooms = 'Выберите количество комнат';
+    } else if (formData.propertyType === 'commercial') {
+      if (!formData.area) newErrors.area = 'Выберите площадь';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (step === 1 && validateStep1()) {
+      setStep(2);
+    } else if (step === 2 && validateStep2()) {
+      handleSubmit();
+    }
+  };
+
+  const handleBack = () => {
+    setStep(step - 1);
+  };
+
+  const handleSubmit = () => {
+    console.log('Form submitted:', formData);
+    // Here you would typically send the data to your backend
+    alert('Регистрация успешно завершена!');
+  };
+
+  const renderStep1 = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">Регистрация</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Имя *
+          </label>
+          <input
+            type="text"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleInputChange}
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              errors.firstName ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder="Введите ваше имя"
+          />
+          {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Фамилия *
+          </label>
+          <input
+            type="text"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleInputChange}
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              errors.lastName ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder="Введите вашу фамилию"
+          />
+          {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Email *
+        </label>
+        <input
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleInputChange}
+          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+            errors.email ? 'border-red-500' : 'border-gray-300'
+          }`}
+          placeholder="example@email.com"
+        />
+        {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Телефон *
+        </label>
+        <input
+          type="tel"
+          name="phone"
+          value={formData.phone}
+          onChange={handleInputChange}
+          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+            errors.phone ? 'border-red-500' : 'border-gray-300'
+          }`}
+          placeholder="+7 (999) 123-45-67"
+        />
+        {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Пароль *
+          </label>
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleInputChange}
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              errors.password ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder="Минимум 6 символов"
+          />
+          {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Подтвердите пароль *
+          </label>
+          <input
+            type="password"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleInputChange}
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder="Повторите пароль"
+          />
+          {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep2 = () => (
+    <div className="space-y-8">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">Дополнительная информация</h2>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Property Type */}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">1. Что вы ищете?</h3>
+          <div className="space-y-3">
+            {[
+              { value: 'apartment', label: 'Квартира' },
+              { value: 'penthouse', label: 'Пентхаус' },
+              { value: 'commercial', label: 'Коммерческая недвижимость' }
+            ].map(option => (
+              <label key={option.value} className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="propertyType"
+                  value={option.value}
+                  checked={formData.propertyType === option.value}
+                  onChange={handleInputChange}
+                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="text-gray-700">{option.label}</span>
+              </label>
+            ))}
+          </div>
+          {errors.propertyType && <p className="text-red-500 text-sm mt-1">{errors.propertyType}</p>}
+        </div>
+
+        {/* Budget */}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">3. Какой бюджет?</h3>
+          <div className="space-y-3">
+            {[
+              { value: 'до 6 млн ₽', label: 'до 6 млн ₽' },
+              { value: '6–9 млн ₽', label: '6–9 млн ₽' },
+              { value: '9–12 млн ₽', label: '9–12 млн ₽' },
+              { value: '12–16 млн ₽', label: '12–16 млн ₽' },
+              { value: '17+ млн ₽', label: '17+ млн ₽' }
+            ].map(option => (
+              <label key={option.value} className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="budget"
+                  value={option.value}
+                  checked={formData.budget === option.value}
+                  onChange={handleInputChange}
+                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="text-gray-700">{option.label}</span>
+              </label>
+            ))}
+          </div>
+          {errors.budget && <p className="text-red-500 text-sm mt-1">{errors.budget}</p>}
+        </div>
+      </div>
+
+      {/* Rooms/Area - Full Width */}
+      {(formData.propertyType === 'apartment' || formData.propertyType === 'penthouse') && (
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">2. Сколько комнат вам нужно?</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { value: '1', label: '1 комната' },
+              { value: '2', label: '2 комнаты' },
+              { value: '3', label: '3 комнаты' },
+              { value: '4+', label: '4+' }
+            ].map(option => (
+              <label key={option.value} className="flex items-center space-x-3 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="rooms"
+                  value={option.value}
+                  checked={formData.rooms === option.value}
+                  onChange={handleInputChange}
+                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="text-gray-700">{option.label}</span>
+              </label>
+            ))}
+          </div>
+          {errors.rooms && <p className="text-red-500 text-sm mt-1">{errors.rooms}</p>}
+        </div>
+      )}
+
+      {formData.propertyType === 'commercial' && (
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">2. Какая площадь вас интересует?</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { value: 'до 50 м²', label: 'до 50 м²' },
+              { value: '50–100 м²', label: '50–100 м²' },
+              { value: '100–200 м²', label: '100–200 м²' },
+              { value: 'Более 200 м²', label: 'Более 200 м²' }
+            ].map(option => (
+              <label key={option.value} className="flex items-center space-x-3 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="area"
+                  value={option.value}
+                  checked={formData.area === option.value}
+                  onChange={handleInputChange}
+                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="text-gray-700">{option.label}</span>
+              </label>
+            ))}
+          </div>
+          {errors.area && <p className="text-red-500 text-sm mt-1">{errors.area}</p>}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Move-in Date */}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">4. Когда вы планируете заехать?</h3>
+          <div className="space-y-3">
+            {[
+              { value: 'Уже сдан', label: 'Уже сдан' },
+              { value: 'В этом году', label: 'В этом году' },
+              { value: 'В 2026-2027 году', label: 'В 2026-2027 году' },
+              { value: 'В 2028-2029 году', label: 'В 2028-2029 году' }
+            ].map(option => (
+              <label key={option.value} className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="moveInDate"
+                  value={option.value}
+                  checked={formData.moveInDate === option.value}
+                  onChange={handleInputChange}
+                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="text-gray-700">{option.label}</span>
+              </label>
+            ))}
+          </div>
+          {errors.moveInDate && <p className="text-red-500 text-sm mt-1">{errors.moveInDate}</p>}
+        </div>
+
+        {/* Living With */}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">5. С кем вы будете жить?</h3>
+          <div className="space-y-3">
+            {[
+              { value: 'Один / одна', label: 'Один / одна' },
+              { value: 'С партнёром', label: 'С партнёром' },
+              { value: 'С семьёй с детьми', label: 'С семьёй с детьми' },
+              { value: 'Для родителей', label: 'Для родителей' },
+              { value: 'Инвестиции / сдача в аренду', label: 'Инвестиции / сдача в аренду' }
+            ].map(option => (
+              <label key={option.value} className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="livingWith"
+                  value={option.value}
+                  checked={formData.livingWith === option.value}
+                  onChange={handleInputChange}
+                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="text-gray-700">{option.label}</span>
+              </label>
+            ))}
+          </div>
+          {errors.livingWith && <p className="text-red-500 text-sm mt-1">{errors.livingWith}</p>}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">Шаг {step} из 2</span>
+              <span className="text-sm font-medium text-gray-700">{step === 1 ? 'Регистрация' : 'Дополнительная информация'}</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(step / 2) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Form Content */}
+          {step === 1 ? renderStep1() : renderStep2()}
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between mt-8">
+            {step > 1 && (
+              <button
+                onClick={handleBack}
+                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Назад
+              </button>
+            )}
+            
+            <button
+              onClick={handleNext}
+              className={`px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${
+                step === 1 ? 'ml-auto' : ''
+              }`}
+            >
+              {step === 1 ? 'Далее' : 'Завершить регистрацию'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RegistrationForm; 
