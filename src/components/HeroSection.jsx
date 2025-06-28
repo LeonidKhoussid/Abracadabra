@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const cities = [
   'Краснодар',
@@ -22,6 +23,7 @@ export default function HeroSection() {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState('buy');
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
 
   // Закрытие dropdown при клике вне
   function handleClickOutside(e) {
@@ -35,6 +37,10 @@ export default function HeroSection() {
     else document.removeEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open]);
+
+  const handleLoginClick = () => {
+    navigate('/login');
+  };
 
   return (
     <section
@@ -110,7 +116,12 @@ export default function HeroSection() {
               </div>
             )}
           </div>
-          <button className="hero-section__login-btn">Войти</button>
+          <button 
+            className="hero-section__login-btn"
+            onClick={handleLoginClick}
+          >
+            Войти
+          </button>
         </div>
         <img
           src="src/assets/firstBlockImg.png"
