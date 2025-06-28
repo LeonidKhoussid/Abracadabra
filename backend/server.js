@@ -62,7 +62,7 @@ app.use(compression());
 // CORS configuration
 const allowedOrigins = [
   'http://localhost:5173',
-  'http://176.113.83.14:5173'
+  'http://82.97.249.148:5173'
 ];
 
 app.use(cors({

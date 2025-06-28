@@ -1,34 +1,34 @@
-# 🐳 Domli Docker Setup
+# 🐳 Настройка Domli с Docker
 
-This guide will help you set up and run the Domli application using Docker on any machine.
+Это руководство поможет вам настроить и запустить приложение Domli с помощью Docker на любой машине.
 
-## 🚀 Quick Start (One Command Setup)
+## 🚀 Быстрый старт (Настройка одной командой)
 
 ```bash
-# Clone the repository
-git clone <your-repo-url>
+# Клонирование репозитория
+git clone <url-вашего-репозитория>
 cd domli
 
-# Run the setup script (Linux/Mac)
+# Запуск скрипта настройки (Linux/Mac)
 ./scripts/docker-setup.sh
 
-# Or manually run these commands:
+# Или выполните эти команды вручную:
 docker-compose up -d
 ```
 
-That's it! Your application will be running at:
+Вот и все! Ваше приложение будет работать по адресам:
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:3000
 
-## 📋 Prerequisites
+## 📋 Требования
 
-- **Docker** (version 20.10+)
-- **Docker Compose** (version 2.0+)
+- **Docker** (версия 20.10+)
+- **Docker Compose** (версия 2.0+)
 
-### Installing Docker
+### Установка Docker
 
 **Windows/Mac:**
-- Download Docker Desktop from [docker.com](https://www.docker.com/products/docker-desktop)
+- Скачайте Docker Desktop с [docker.com](https://www.docker.com/products/docker-desktop)
 
 **Linux (Ubuntu/Debian):**
 ```bash
@@ -45,160 +45,160 @@ sudo systemctl enable docker
 sudo usermod -aG docker $USER
 ```
 
-## 🛠 Manual Setup
+## 🛠 Ручная настройка
 
-If you prefer to set up manually:
+Если вы предпочитаете настраивать вручную:
 
-### 1. Environment Setup
+### 1. Настройка окружения
 ```bash
-# Backend environment
+# Окружение backend
 cp backend/env.example backend/.env
-# Edit backend/.env with your settings
+# Отредактируйте backend/.env с вашими настройками
 
-# Frontend environment  
+# Окружение frontend
 cp frontend/env.example frontend/.env
-# Edit frontend/.env with your settings
+# Отредактируйте frontend/.env с вашими настройками
 ```
 
-### 2. Start Services
+### 2. Запуск сервисов
 ```bash
-# Build and start all services
+# Сборка и запуск всех сервисов
 docker-compose up -d
 
-# Or start specific services
+# Или запуск конкретных сервисов
 docker-compose up -d postgres
 docker-compose up -d backend
 docker-compose up -d frontend
 ```
 
-### 3. Database Setup
+### 3. Настройка базы данных
 ```bash
-# Run migrations
+# Запуск миграций
 docker-compose exec backend npm run migrate
 
-# Seed database (optional)
+# Заполнение базы данных (опционально)
 docker-compose exec backend npm run seed
 ```
 
-## 🎯 Development vs Production
+## 🎯 Режим разработки vs продакшен
 
-### Development Mode
+### Режим разработки
 ```bash
-# Start development environment
+# Запуск среды разработки
 docker-compose up -d
 
-# View logs
+# Просмотр логов
 docker-compose logs -f
 
-# Stop services
+# Остановка сервисов
 docker-compose down
 ```
 
-### Production Mode
+### Продакшен режим
 ```bash
-# Start production environment
+# Запуск продакшен среды
 docker-compose -f docker-compose.prod.yml up -d
 
-# Or with custom environment file
+# Или с пользовательским файлом окружения
 docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
 ```
 
-## 🔧 Useful Commands
+## 🔧 Полезные команды
 
-### Container Management
+### Управление контейнерами
 ```bash
-# View running containers
+# Просмотр запущенных контейнеров
 docker-compose ps
 
-# View logs
+# Просмотр логов
 docker-compose logs -f
 docker-compose logs -f backend
 docker-compose logs -f frontend
 
-# Restart services
+# Перезапуск сервисов
 docker-compose restart
 docker-compose restart backend
 
-# Stop all services
+# Остановка всех сервисов
 docker-compose down
 
-# Stop and remove volumes (⚠️ deletes database)
+# Остановка и удаление томов (⚠️ удаляет базу данных)
 docker-compose down -v
 ```
 
-### Database Operations
+### Операции с базой данных
 ```bash
-# Access PostgreSQL
+# Доступ к PostgreSQL
 docker-compose exec postgres psql -U postgres -d domli_db
 
-# Run migrations
+# Запуск миграций
 docker-compose exec backend npm run migrate
 
-# Seed database
+# Заполнение базы данных
 docker-compose exec backend npm run seed
 
-# Backup database
+# Резервное копирование базы данных
 docker-compose exec postgres pg_dump -U postgres domli_db > backup.sql
 ```
 
-### Application Operations
+### Операции с приложением
 ```bash
-# Access backend container
+# Доступ к контейнеру backend
 docker-compose exec backend sh
 
-# Access frontend container
+# Доступ к контейнеру frontend
 docker-compose exec frontend sh
 
-# Install new dependencies
-docker-compose exec backend npm install <package>
-docker-compose exec frontend npm install <package>
+# Установка новых зависимостей
+docker-compose exec backend npm install <пакет>
+docker-compose exec frontend npm install <пакет>
 
-# Rebuild containers after dependency changes
+# Пересборка контейнеров после изменения зависимостей
 docker-compose build backend
 docker-compose up -d backend
 ```
 
-## 🌐 Switching Servers
+## 🌐 Переход на новые серверы
 
-To move your application to a new server:
+Для переноса вашего приложения на новый сервер:
 
-### 1. Backup Current Data
+### 1. Резервное копирование текущих данных
 ```bash
-# Backup database
+# Резервное копирование базы данных
 docker-compose exec postgres pg_dump -U postgres domli_db > backup.sql
 
-# Backup environment files
+# Резервное копирование файлов окружения
 cp backend/.env backend.env.backup
 cp frontend/.env frontend.env.backup
 ```
 
-### 2. Transfer to New Server
+### 2. Перенос на новый сервер
 ```bash
-# Copy your project folder to the new server
-scp -r ./domli user@new-server:/path/to/destination/
+# Копирование папки проекта на новый сервер
+scp -r ./domli пользователь@новый-сервер:/путь/к/назначению/
 
-# Or use git
-git clone <your-repo-url>
+# Или использование git
+git clone <url-вашего-репозитория>
 ```
 
-### 3. Restore on New Server
+### 3. Восстановление на новом сервере
 ```bash
-# Copy environment files
+# Копирование файлов окружения
 cp backend.env.backup backend/.env
 cp frontend.env.backup frontend/.env
 
-# Start services
+# Запуск сервисов
 docker-compose up -d
 
-# Restore database
+# Восстановление базы данных
 docker-compose exec -T postgres psql -U postgres domli_db < backup.sql
 ```
 
-## 🔒 Environment Variables
+## 🔒 Переменные окружения
 
 ### Backend (.env)
 ```env
-# Database
+# База данных
 DB_HOST=postgres
 DB_PORT=5432
 DB_NAME=domli_db
@@ -206,10 +206,10 @@ DB_USER=postgres
 DB_PASSWORD=password
 
 # JWT
-JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+JWT_SECRET=ваш_супер_секретный_jwt_ключ_измените_это_в_продакшене
 JWT_EXPIRES_IN=7d
 
-# Server
+# Сервер
 PORT=3000
 NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
@@ -221,129 +221,129 @@ VITE_API_URL=http://localhost:3000/api
 VITE_NODE_ENV=development
 ```
 
-## 🐛 Troubleshooting
+## 🐛 Устранение неполадок
 
-### Common Issues
+### Частые проблемы
 
-**1. Port Already in Use**
+**1. Порт уже используется**
 ```bash
-# Check what's using the port
+# Проверка того, что использует порт
 sudo lsof -i :3000
 sudo lsof -i :5173
 
-# Kill the process or change ports in docker-compose.yml
+# Убийство процесса или изменение портов в docker-compose.yml
 ```
 
-**2. Database Connection Issues**
+**2. Проблемы подключения к базе данных**
 ```bash
-# Check if PostgreSQL is running
+# Проверка запуска PostgreSQL
 docker-compose ps postgres
 
-# View PostgreSQL logs
+# Просмотр логов PostgreSQL
 docker-compose logs postgres
 
-# Restart PostgreSQL
+# Перезапуск PostgreSQL
 docker-compose restart postgres
 ```
 
-**3. Frontend Can't Connect to Backend**
+**3. Frontend не может подключиться к backend**
 ```bash
-# Check if backend is running
+# Проверка запуска backend
 docker-compose ps backend
 
-# Check backend logs
+# Проверка логов backend
 docker-compose logs backend
 
-# Verify API is responding
+# Проверка ответа API
 curl http://localhost:3000/health
 ```
 
-**4. Permission Issues**
+**4. Проблемы с правами доступа**
 ```bash
-# Fix file permissions
+# Исправление прав доступа к файлам
 sudo chown -R $USER:$USER .
 
-# Fix Docker permissions (Linux)
+# Исправление прав доступа Docker (Linux)
 sudo usermod -aG docker $USER
-# Then log out and back in
+# Затем выйдите и войдите снова
 ```
 
-### Reset Everything
+### Сброс всего
 ```bash
-# Stop and remove everything
+# Остановка и удаление всего
 docker-compose down -v
 
-# Remove all images
+# Удаление всех образов
 docker system prune -a
 
-# Start fresh
+# Свежий старт
 ./scripts/docker-setup.sh
 ```
 
-## 📊 Monitoring
+## 📊 Мониторинг
 
-### Health Checks
+### Проверки здоровья
 ```bash
-# Check application health
+# Проверка здоровья приложения
 curl http://localhost:3000/health
 
-# Check container health
+# Проверка здоровья контейнеров
 docker-compose ps
 ```
 
-### Resource Usage
+### Использование ресурсов
 ```bash
-# View resource usage
+# Просмотр использования ресурсов
 docker stats
 
-# View disk usage
+# Просмотр использования диска
 docker system df
 ```
 
-## 🔄 Updates
+## 🔄 Обновления
 
-### Update Application
+### Обновление приложения
 ```bash
-# Pull latest changes
+# Получение последних изменений
 git pull
 
-# Rebuild and restart
+# Пересборка и перезапуск
 docker-compose down
 docker-compose build
 docker-compose up -d
 
-# Run migrations if needed
+# Запуск миграций при необходимости
 docker-compose exec backend npm run migrate
 ```
 
-### Update Dependencies
+### Обновление зависимостей
 ```bash
-# Update backend dependencies
+# Обновление зависимостей backend
 docker-compose exec backend npm update
 
-# Update frontend dependencies
+# Обновление зависимостей frontend
 docker-compose exec frontend npm update
 
-# Rebuild containers
+# Пересборка контейнеров
 docker-compose build
 docker-compose up -d
 ```
 
-## 📞 Support
+## 📞 Поддержка
 
-If you encounter issues:
+Если вы столкнулись с проблемами:
 
-1. Check the logs: `docker-compose logs -f`
-2. Verify environment variables are set correctly
-3. Ensure Docker and Docker Compose are up to date
-4. Check the troubleshooting section above
+1. Проверьте логи: `docker-compose logs -f`
+2. Убедитесь, что переменные окружения установлены правильно
+3. Убедитесь, что Docker и Docker Compose обновлены
+4. Проверьте раздел устранения неполадок выше
 
-For team support, create an issue in your repository with:
-- Your operating system
-- Docker version
-- Error messages from logs
-- Steps to reproduce the issue
+Для поддержки команды создайте issue в вашем репозитории с:
+- Вашей операционной системой
+- Версией Docker
+- Сообщениями об ошибках из логов
+- Шагами для воспроизведения проблемы
 
 ---
 
-**Happy coding! 🚀** 
+**Удачного кодирования! 🚀** 

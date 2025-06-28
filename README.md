@@ -1,16 +1,16 @@
-# Domli Real Estate Platform
+# Domli - Платформа Недвижимости
 
-A modern real estate platform built with React frontend and Express.js backend.
+Современная платформа недвижимости, построенная на React frontend и Express.js backend.
 
-## 🚀 Features
+## 🚀 Возможности
 
-- User registration and authentication
-- Property search and filtering
-- User preferences management
-- Responsive design
-- Real-time updates
+- Регистрация и аутентификация пользователей
+- Поиск и фильтрация недвижимости
+- Управление предпочтениями пользователей
+- Адаптивный дизайн
+- Обновления в реальном времени
 
-## 🛠 Tech Stack
+## 🛠 Технологический стек
 
 ### Frontend
 - React 18
@@ -22,238 +22,253 @@ A modern real estate platform built with React frontend and Express.js backend.
 - Node.js
 - Express.js
 - PostgreSQL
-- JWT Authentication
-- bcryptjs for password hashing
+- JWT Аутентификация
+- bcryptjs для хеширования паролей
 
-### Process Management
-- PM2 for production process management
+### Управление процессами
+- PM2 для управления процессами в продакшене
 
-## 📋 Prerequisites
+## 📋 Требования
 
 - Node.js >= 18.0.0
 - npm >= 8.0.0
 - PostgreSQL >= 12.0
-- PM2 (for production)
+- PM2 (для продакшена)
 
-## 🚀 Quick Start
+## 🚀 Быстрый старт
 
-### 1. Clone the repository
+### 1. Клонирование репозитория
 ```bash
-git clone <repository-url>
+git clone <url-репозитория>
 cd domli
 ```
 
-### 2. Install dependencies
+### 2. Установка зависимостей
 ```bash
 npm run install:all
 ```
 
-### 3. Environment Setup
+### 3. Настройка окружения
 
-#### Backend Environment
-Copy the example environment file and configure it:
+#### Окружение Backend
+Скопируйте файл примера окружения и настройте его:
 ```bash
 cd backend
 cp env.example .env
 ```
 
-Edit `.env` with your database and JWT configuration:
+Отредактируйте `.env` с вашей конфигурацией базы данных и JWT:
 ```env
-# Database
+# База данных
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=domli_db
-DB_USER=your_username
-DB_PASSWORD=your_password
+DB_USER=ваш_пользователь
+DB_PASSWORD=ваш_пароль
 
 # JWT
-JWT_SECRET=your_jwt_secret_key
+JWT_SECRET=ваш_jwt_секретный_ключ
 JWT_EXPIRES_IN=7d
 
-# Server
+# Сервер
 PORT=3000
 NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
 ```
 
-#### Frontend Environment
+#### Окружение Frontend
 ```bash
 cd frontend
 cp env.example .env
 ```
 
-Edit `.env`:
+Отредактируйте `.env`:
 ```env
 VITE_API_URL=http://localhost:3000/api
 VITE_NODE_ENV=development
 ```
 
-### 4. Database Setup
+### 4. Настройка базы данных
 ```bash
 cd backend
 npm run migrate
 npm run seed
 ```
 
-### 5. Development Mode
+### 5. Режим разработки
 ```bash
-# Start both frontend and backend in development mode
+# Запуск frontend и backend в режиме разработки
 npm run dev
 ```
 
-Or start them separately:
+Или запустите их отдельно:
 ```bash
-# Backend only
+# Только backend
 cd backend && npm run dev
 
-# Frontend only
+# Только frontend
 cd frontend && npm run dev
 ```
 
-## 🏭 Production Deployment
+## 🏭 Продакшен развертывание
 
-### 1. Build the application
+### 1. Сборка приложения
 ```bash
 npm run build
 ```
 
-### 2. Start with PM2
+### 2. Запуск с PM2
 ```bash
-# Development mode
+# Режим разработки
 npm run start
 
-# Production mode
+# Продакшен режим
 npm run start:prod
 ```
 
-### 3. PM2 Management Commands
+### 3. Команды управления PM2
 ```bash
-# View status
+# Просмотр статуса
 npm run status
 
-# View logs
+# Просмотр логов
 npm run logs
 
-# Monitor processes
+# Мониторинг процессов
 npm run monit
 
-# Restart applications
+# Перезапуск приложений
 npm run restart
 
-# Stop applications
+# Остановка приложений
 npm run stop
 
-# Delete applications
+# Удаление приложений
 npm run delete
 ```
 
-## 📁 Project Structure
+## 📁 Структура проекта
 
 ```
 domli/
 ├── backend/                 # Express.js backend
-│   ├── config/             # Database and app configuration
-│   ├── middleware/         # Custom middleware
-│   ├── migrations/         # Database migrations
-│   ├── routes/             # API routes
-│   ├── seeds/              # Database seed data
-│   └── server.js           # Main server file
+│   ├── config/             # Конфигурация базы данных и приложения
+│   ├── middleware/         # Пользовательские middleware
+│   ├── migrations/         # Миграции базы данных
+│   ├── routes/             # API маршруты
+│   ├── seeds/              # Данные для заполнения базы данных
+│   └── server.js           # Главный файл сервера
 ├── frontend/               # React frontend
 │   ├── src/
-│   │   ├── components/     # React components
-│   │   ├── context/        # React context providers
-│   │   ├── pages/          # Page components
-│   │   ├── services/       # API services
-│   │   └── App.jsx         # Main app component
+│   │   ├── components/     # React компоненты
+│   │   ├── context/        # React context провайдеры
+│   │   ├── pages/          # Компоненты страниц
+│   │   ├── services/       # API сервисы
+│   │   └── App.jsx         # Главный компонент приложения
 │   └── package.json
-├── ecosystem.config.js     # PM2 configuration
-├── package.json            # Root package.json
+├── ecosystem.config.js     # Конфигурация PM2
+├── package.json            # Корневой package.json
 └── README.md
 ```
 
-## 🔐 Authentication
+## 🔐 Аутентификация
 
-The application uses JWT (JSON Web Tokens) for authentication:
+Приложение использует JWT (JSON Web Tokens) для аутентификации:
 
-- **Registration**: Users can register with email, password, and personal information
-- **Login**: Users can login with email and password
-- **Protected Routes**: Certain routes require authentication
-- **Token Storage**: Tokens are stored in localStorage
+- **Регистрация**: Пользователи могут регистрироваться с email, паролем и личной информацией
+- **Вход**: Пользователи могут входить с email и паролем
+- **Защищенные маршруты**: Некоторые маршруты требуют аутентификации
+- **Хранение токенов**: Токены хранятся в localStorage
 
-## 🗄 Database Schema
+## 🗄 Схема базы данных
 
-### Users Table
-- id (Primary Key)
+### Таблица Users
+- id (Первичный ключ)
 - first_name
 - last_name
-- email (Unique)
+- email (Уникальный)
 - phone
 - password_hash
 - is_active
 - created_at
 - last_login
 
-### User Preferences Table
-- id (Primary Key)
-- user_id (Foreign Key)
+### Таблица User Preferences
+- id (Первичный ключ)
+- user_id (Внешний ключ)
+- property_type
+- rooms
+- min_price
+- max_price
+- location
+- created_at
+- updated_at
+
+### Таблица Properties
+- id (Первичный ключ)
+- title
+- description
+- price
 - property_type
 - rooms
 - area
-- budget
-- move_in_date
-- living_with
+- location
+- is_available
+- owner_id (Внешний ключ)
 - created_at
+- updated_at
 
-## 🔧 API Endpoints
+## 🔌 API Endpoints
 
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `POST /api/auth/logout` - User logout
-- `GET /api/auth/me` - Get current user
+### Аутентификация
+- `POST /api/auth/register` - Регистрация пользователя
+- `POST /api/auth/login` - Вход пользователя
+- `POST /api/auth/logout` - Выход пользователя
+- `GET /api/auth/me` - Получение информации о текущем пользователе
 
-### Users
-- `PUT /api/users/profile` - Update user profile
-- `PUT /api/users/preferences` - Update user preferences
+### Пользователи
+- `GET /api/users/profile` - Получение профиля пользователя
+- `PUT /api/users/profile` - Обновление профиля пользователя
+- `PUT /api/users/preferences` - Обновление предпочтений пользователя
 
-### Properties
-- `GET /api/properties` - Get properties with filters
-- `GET /api/properties/:id` - Get property by ID
+### Недвижимость
+- `GET /api/properties` - Получение недвижимости с фильтрами
+- `GET /api/properties/:id` - Получение недвижимости по ID
 
-## 🐛 Troubleshooting
+## 🐛 Устранение неполадок
 
-### Common Issues
+### Частые проблемы
 
-1. **Database Connection Error**
-   - Check if PostgreSQL is running
-   - Verify database credentials in `.env`
-   - Ensure database exists
+1. **Ошибка подключения к базе данных**
+   - Проверьте, запущен ли PostgreSQL
+   - Проверьте учетные данные базы данных в `.env`
+   - Убедитесь, что база данных существует
 
-2. **CORS Error**
-   - Check `FRONTEND_URL` in backend `.env`
-   - Verify frontend is running on the correct port
+2. **Ошибка CORS**
+   - Проверьте `FRONTEND_URL` в backend `.env`
+   - Убедитесь, что frontend запущен на правильном порту
 
-3. **PM2 Issues**
-   - Check PM2 logs: `npm run logs`
-   - Restart applications: `npm run restart`
+3. **Проблемы с PM2**
+   - Проверьте логи PM2: `npm run logs`
+   - Перезапустите приложения: `npm run restart`
 
-### Logs
-- Backend logs: `cd backend && npm run logs`
-- Frontend logs: Check browser console
-- PM2 logs: `npm run logs`
+### Логи
+- Логи backend: `cd backend && npm run logs`
+- Логи frontend: Проверьте консоль браузера
+- Логи PM2: `npm run logs`
 
-## 📝 License
+## 📝 Лицензия
 
-This project is licensed under the MIT License.
+Этот проект лицензирован под MIT License.
 
-## 🤝 Contributing
+## 🤝 Вклад в проект
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+1. Форкните репозиторий
+2. Создайте ветку для функции
+3. Внесите изменения
+4. Добавьте тесты, если применимо
+5. Отправьте pull request
 
-## 📞 Support
+## 📞 Поддержка
 
-For support, email support@domli.com or create an issue in the repository. 
+Для поддержки напишите на support@domli.com или создайте issue в репозитории. 
