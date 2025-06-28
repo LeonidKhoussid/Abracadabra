@@ -16,10 +16,17 @@ class ApiService {
 
   // Helper method to handle API responses
   async handleResponse(response) {
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (error) {
+      console.error('Failed to parse JSON response:', error);
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
     
     if (!response.ok) {
-      throw new Error(data.message || 'Something went wrong');
+      console.error(`API Error ${response.status}:`, data.message || response.statusText);
+      throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
     }
     
     return data;
@@ -103,6 +110,16 @@ class ApiService {
       method: 'PUT',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(preferences)
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async changePassword(passwordData) {
+    const response = await fetch(`${this.baseURL}/users/change-password`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(passwordData)
     });
 
     return this.handleResponse(response);

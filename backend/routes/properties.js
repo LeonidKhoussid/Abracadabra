@@ -78,6 +78,37 @@ const getProjectCoordinates = (projectName, developer, index) => {
   return [baseCoords[0] + offsetLat, baseCoords[1] + offsetLng];
 };
 
+// Function to get property status based on completion year and other factors
+const getPropertyStatus = (completionYear, projectName, index) => {
+  const currentYear = new Date().getFullYear();
+  
+  // If completion year is available, use it
+  if (completionYear) {
+    const year = parseInt(completionYear);
+    if (!isNaN(year)) {
+      if (year <= currentYear) {
+        return 'Сдан';
+      } else if (year === currentYear + 1) {
+        return 'Котлован';
+      } else {
+        return 'В продаже';
+      }
+    }
+  }
+  
+  // If no completion year, distribute statuses realistically
+  // 40% completed, 35% for sale, 25% under construction
+  const statusIndex = (index + projectName.length) % 100;
+  
+  if (statusIndex < 40) {
+    return 'Сдан';
+  } else if (statusIndex < 75) {
+    return 'В продаже';
+  } else {
+    return 'Котлован';
+  }
+};
+
 // Get all properties from CSV
 router.get('/map-data', async (req, res) => {
   try {
@@ -325,13 +356,12 @@ router.get('/recommendations', async (req, res) => {
         })
         .on('end', () => {
           try {
-            // Get featured/popular properties (first 6 valid properties)
+            // Get all valid properties
             const recommendations = properties
               .filter(property => {
                 // Skip properties with invalid prices
                 return property.price_total && !property.price_total.includes('*');
-              })
-              .slice(0, 6);
+              });
 
             // Format recommendations for response
             const formattedRecommendations = recommendations.map((property, index) => {
@@ -341,6 +371,9 @@ router.get('/recommendations', async (req, res) => {
               
               // Get coordinates for the property
               const coordinates = getProjectCoordinates(property.project_name, property.developer_name, index);
+              
+              // Get property status
+              const status = getPropertyStatus(property.completion_year, property.project_name, index);
 
               return {
                 id: index + 1,
@@ -356,6 +389,7 @@ router.get('/recommendations', async (req, res) => {
                 developer: property.developer_name,
                 project: property.project_name,
                 completion_date: property.completion_year,
+                status: status,
                 coordinates: coordinates,
                 main_photo_url: property.main_photo_url || null,
                 gallery_photos_urls: property.gallery_photos_urls ? property.gallery_photos_urls.split(',') : []
@@ -501,10 +535,7 @@ router.get('/personalized-recommendations', async (req, res) => {
             // If no matches found, return popular properties instead
             if (recommendations.length === 0) {
               recommendations = properties
-                .filter(p => p.price_total && !p.price_total.includes('*'))
-                .slice(0, 6);
-            } else {
-              recommendations = recommendations.slice(0, 6);
+                .filter(p => p.price_total && !p.price_total.includes('*'));
             }
 
             // Format recommendations for response
@@ -515,6 +546,9 @@ router.get('/personalized-recommendations', async (req, res) => {
               
               // Get coordinates for the property
               const coordinates = getProjectCoordinates(property.project_name, property.developer_name, index);
+              
+              // Get property status
+              const status = getPropertyStatus(property.completion_year, property.project_name, index);
 
               return {
                 id: index + 1,
@@ -530,6 +564,7 @@ router.get('/personalized-recommendations', async (req, res) => {
                 developer: property.developer_name,
                 project: property.project_name,
                 completion_date: property.completion_year,
+                status: status,
                 coordinates: coordinates,
                 main_photo_url: property.main_photo_url || null,
                 gallery_photos_urls: property.gallery_photos_urls ? property.gallery_photos_urls.split(',') : []
@@ -629,6 +664,9 @@ router.get('/:id', async (req, res) => {
             // Get coordinates for the property
             const coordinates = getProjectCoordinates(propertyData.project_name, propertyData.developer_name, propertyIndex);
             
+            // Get property status
+            const status = getPropertyStatus(propertyData.completion_year, propertyData.project_name, propertyIndex);
+            
             // Format property data
             const property = {
               id: propertyId,
@@ -644,6 +682,7 @@ router.get('/:id', async (req, res) => {
               developer: propertyData.developer_name,
               project: propertyData.project_name,
               completion_date: propertyData.completion_year,
+              status: status,
               coordinates: coordinates,
               main_photo_url: propertyData.main_photo_url || null,
               gallery_photos_urls: propertyData.gallery_photos_urls ? propertyData.gallery_photos_urls.split(',') : [],
