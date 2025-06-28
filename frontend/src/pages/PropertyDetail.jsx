@@ -1,20 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import PropertyMap from '../components/PropertyMap';
+import CRMForm from '../components/CRMForm';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 const PropertyDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedApartment, setSelectedApartment] = useState(0);
+  const [isCRMFormOpen, setIsCRMFormOpen] = useState(false);
+
+  // Apartment data
+  const apartments = [
+    {
+      id: 0,
+      type: 'Студия',
+      area: 20,
+      price: 3860000,
+      floor: '12-18',
+      project: 'Теплые края'
+    },
+    {
+      id: 1,
+      type: 'Студия',
+      area: 25,
+      price: 4200000,
+      floor: '10-18',
+      project: 'Теплые края'
+    },
+    {
+      id: 2,
+      type: 'Студия',
+      area: 27,
+      price: 4450000,
+      floor: '8-18',
+      project: 'Теплые края'
+    },
+    {
+      id: 3,
+      type: 'Студия',
+      area: 29,
+      price: 4680000,
+      floor: '5-18',
+      project: 'Теплые края'
+    }
+  ];
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('ru-RU').format(price) + ' ₽';
+  };
 
   useEffect(() => {
     const fetchPropertyDetails = async () => {
@@ -277,7 +320,10 @@ const PropertyDetail = () => {
 
               {/* Contact Button */}
               <div className="mt-6 space-y-3">
-                <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                <button 
+                  onClick={() => setIsCRMFormOpen(true)}
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
                   Связаться с менеджером
                 </button>
                 
@@ -333,11 +379,166 @@ const PropertyDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Infrastructure Section */}
+        <div className="mt-12">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-center">
+              <div className="w-full max-w-4xl">
+                <img
+                  src="https://storage.yandexcloud.net/domli-properties/%D0%B2%D1%81%D0%B5%D1%81%D0%B2%D0%BE%D0%B8.jpg"
+                  alt="Инфраструктура жилого комплекса"
+                  className="w-full h-auto rounded-lg shadow-lg object-cover"
+                  style={{ maxHeight: '500px' }}
+                  onError={(e) => {
+                    e.target.src = '/placeholder-infrastructure.jpg';
+                  }}
+                />
+              </div>
+            </div>
+            <div className="mt-6 text-center">
+            </div>
+          </div>
+        </div>
+
+        {/* Apartment Selection Section */}
+        <div className="mt-12">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Выбор квартиры</h2>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left side - Apartment cards */}
+              <div className="lg:col-span-1">
+                <div className="grid grid-cols-2 gap-4">
+                  {apartments.map((apartment) => (
+                    <div
+                      key={apartment.id}
+                      onClick={() => setSelectedApartment(apartment.id)}
+                      className={`bg-white rounded-lg border-2 p-4 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                        selectedApartment === apartment.id 
+                          ? 'border-blue-500 border-4 shadow-lg' 
+                          : 'border-gray-200 hover:border-blue-300'
+                      }`}
+                    >
+                      <div className="mb-3">
+                        <img
+                          src="https://storage.yandexcloud.net/domli-properties/schemaRoom.png"
+                          alt={`План ${apartment.type} ${apartment.area}м²`}
+                          className="w-full h-24 object-contain rounded border bg-gray-50 p-2"
+                        />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="font-semibold text-gray-800 mb-1">{apartment.type}</h3>
+                        <p className="text-sm text-gray-600">{apartment.area} м²</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right side - Selected apartment details */}
+              <div className="lg:col-span-2">
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Large apartment image */}
+                    <div>
+                      <img
+                        src="https://storage.yandexcloud.net/domli-properties/schemaRoom.png"
+                        alt={`План ${apartments[selectedApartment].type}`}
+                        className="w-full h-64 object-contain rounded-lg border bg-gray-50 p-4"
+                      />
+                    </div>
+
+                    {/* Apartment details */}
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-800 mb-2">Проект</h3>
+                        <p className="text-2xl font-bold text-gray-900">{apartments[selectedApartment].project}</p>
+                      </div>
+
+                      <div>
+                        <h4 className="text-lg font-bold text-gray-800 mb-2">Стоимость</h4>
+                        <p className="text-3xl font-bold text-green-600">{formatPrice(apartments[selectedApartment].price)}</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <h5 className="font-semibold text-gray-700">Площадь</h5>
+                          <p className="text-xl font-bold text-gray-900">{apartments[selectedApartment].area} м²</p>
+                        </div>
+                        <div>
+                          <h5 className="font-semibold text-gray-700">Этаж</h5>
+                          <p className="text-xl font-bold text-gray-900">{apartments[selectedApartment].floor}</p>
+                        </div>
+                      </div>
+
+                      <button className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center space-x-2">
+                        <span>Забронировать</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* General Plan Section */}
+        <div className="mt-12">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Генеральный план</h2>
+            <p className="text-gray-600 mb-6 text-center max-w-2xl mx-auto">
+              Интерактивная 3D модель жилого комплекса с детальным планом территории и инфраструктурой.
+            </p>
+            <div className="flex justify-center">
+              <div className="w-full max-w-5xl">
+                <div className="relative rounded-lg overflow-hidden shadow-lg">
+                  <video
+                    className="w-full h-auto"
+                    controls
+                    preload="metadata"
+                    style={{ maxHeight: '600px' }}
+                  >
+                    <source 
+                      src="https://storage.yandexcloud.net/domli-properties/avalin-program-interface_KDof8XCy.mp4_1751144962382.mp4" 
+                      type="video/mp4" 
+                    />
+                    <p className="text-center text-gray-500 p-8">
+                      Ваш браузер не поддерживает воспроизведение видео. 
+                      <a 
+                        href="https://storage.yandexcloud.net/domli-properties/avalin-program-interface_KDof8XCy.mp4_1751144962382.mp4"
+                        className="text-blue-600 hover:underline ml-1"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Скачать видео
+                      </a>
+                    </p>
+                  </video>
+                </div>
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-gray-500">
+                    Нажмите на воспроизведение, чтобы увидеть интерактивную модель комплекса
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+      
+      {/* CRM Form Modal */}
+      <CRMForm 
+        isOpen={isCRMFormOpen}
+        onClose={() => setIsCRMFormOpen(false)}
+        propertyData={property}
+        userData={user}
+        isAuthenticated={isAuthenticated}
+      />
       
       <Footer />
     </div>
   );
 };
 
-export default PropertyDetail; 
+export default PropertyDetail;
