@@ -540,3 +540,301 @@ Error: bind EADDRINUSE null:3000
 2025-06-28T14:23:09: 🔗 Health check: http://localhost:3000/health
 2025-06-28T14:23:09: 📚 API docs: http://localhost:3000/api
 2025-06-28T14:23:47: [0mGET /health [32m200[0m 2.612 ms - 112[0m
+2025-06-28T18:38:01: 📦 Connected to PostgreSQL database
+2025-06-28T18:38:01: ✅ Database connected successfully
+2025-06-28T18:38:01: 🚀 Server running on port 3000
+2025-06-28T18:38:01: 📊 Environment: development
+2025-06-28T18:38:01: 🔗 Health check: http://localhost:3000/health
+2025-06-28T18:38:01: 📚 API docs: http://localhost:3000/api
+2025-06-28T18:38:05: ❌ Query error: error: relation "properties" does not exist
+    at /Users/leo/Documents/olimp/domli/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async query (file:///Users/leo/Documents/olimp/domli/backend/config/database.js:34:17)
+    at async file:///Users/leo/Documents/olimp/domli/backend/routes/properties.js:310:28 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '197',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1452',
+  routine: 'parserOpenTable'
+}
+2025-06-28T18:38:05: Get property error: error: relation "properties" does not exist
+    at /Users/leo/Documents/olimp/domli/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async query (file:///Users/leo/Documents/olimp/domli/backend/config/database.js:34:17)
+    at async file:///Users/leo/Documents/olimp/domli/backend/routes/properties.js:310:28 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '197',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1452',
+  routine: 'parserOpenTable'
+}
+2025-06-28T18:38:05: [0mGET /api/properties/recommendations [31m500[0m 10.448 ms - 108[0m
+2025-06-28T18:38:49: 📦 Connected to PostgreSQL database
+2025-06-28T18:38:49: ❌ Query error: error: relation "properties" does not exist
+    at /Users/leo/Documents/olimp/domli/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async query (file:///Users/leo/Documents/olimp/domli/backend/config/database.js:34:17)
+    at async file:///Users/leo/Documents/olimp/domli/backend/routes/properties.js:310:28 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '197',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1452',
+  routine: 'parserOpenTable'
+}
+2025-06-28T18:38:49: Get property error: error: relation "properties" does not exist
+    at /Users/leo/Documents/olimp/domli/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async query (file:///Users/leo/Documents/olimp/domli/backend/config/database.js:34:17)
+    at async file:///Users/leo/Documents/olimp/domli/backend/routes/properties.js:310:28 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '197',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1452',
+  routine: 'parserOpenTable'
+}
+2025-06-28T18:38:49: [0mGET /api/properties/recommendations [31m500[0m 9.211 ms - 108[0m
+2025-06-28T18:38:54: 📦 Connected to PostgreSQL database
+2025-06-28T18:38:54: ❌ Query error: error: relation "properties" does not exist
+    at /Users/leo/Documents/olimp/domli/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async query (file:///Users/leo/Documents/olimp/domli/backend/config/database.js:34:17)
+    at async file:///Users/leo/Documents/olimp/domli/backend/routes/properties.js:310:28 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '197',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1452',
+  routine: 'parserOpenTable'
+}
+2025-06-28T18:38:54: Get property error: error: relation "properties" does not exist
+    at /Users/leo/Documents/olimp/domli/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async query (file:///Users/leo/Documents/olimp/domli/backend/config/database.js:34:17)
+    at async file:///Users/leo/Documents/olimp/domli/backend/routes/properties.js:310:28 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '197',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1452',
+  routine: 'parserOpenTable'
+}
+2025-06-28T18:38:54: [0mGET /api/properties/recommendations [31m500[0m 8.188 ms - 108[0m
+2025-06-28T18:39:23: 📦 Connected to PostgreSQL database
+2025-06-28T18:39:23: ✅ Database connected successfully
+2025-06-28T18:39:23: 🚀 Server running on port 3000
+2025-06-28T18:39:23: 📊 Environment: development
+2025-06-28T18:39:23: 🔗 Health check: http://localhost:3000/health
+2025-06-28T18:39:23: 📚 API docs: http://localhost:3000/api
+2025-06-28T18:39:28: ❌ Query error: error: relation "properties" does not exist
+    at /Users/leo/Documents/olimp/domli/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async query (file:///Users/leo/Documents/olimp/domli/backend/config/database.js:34:17)
+    at async file:///Users/leo/Documents/olimp/domli/backend/routes/properties.js:310:28 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '197',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1452',
+  routine: 'parserOpenTable'
+}
+2025-06-28T18:39:28: Get property error: error: relation "properties" does not exist
+    at /Users/leo/Documents/olimp/domli/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async query (file:///Users/leo/Documents/olimp/domli/backend/config/database.js:34:17)
+    at async file:///Users/leo/Documents/olimp/domli/backend/routes/properties.js:310:28 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '197',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1452',
+  routine: 'parserOpenTable'
+}
+2025-06-28T18:39:28: [0mGET /api/properties/recommendations [31m500[0m 7.961 ms - 108[0m
+2025-06-28T18:39:48: 📦 Connected to PostgreSQL database
+2025-06-28T18:39:48: ❌ Query error: error: relation "properties" does not exist
+    at /Users/leo/Documents/olimp/domli/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async query (file:///Users/leo/Documents/olimp/domli/backend/config/database.js:34:17)
+    at async file:///Users/leo/Documents/olimp/domli/backend/routes/properties.js:310:28 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '197',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1452',
+  routine: 'parserOpenTable'
+}
+2025-06-28T18:39:48: Get property error: error: relation "properties" does not exist
+    at /Users/leo/Documents/olimp/domli/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async query (file:///Users/leo/Documents/olimp/domli/backend/config/database.js:34:17)
+    at async file:///Users/leo/Documents/olimp/domli/backend/routes/properties.js:310:28 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '197',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1452',
+  routine: 'parserOpenTable'
+}
+2025-06-28T18:39:48: [0mGET /api/properties/recommendations [31m500[0m 10.433 ms - 108[0m
+2025-06-28T18:40:54: 📦 Connected to PostgreSQL database
+2025-06-28T18:40:54: ❌ Query error: error: relation "properties" does not exist
+    at /Users/leo/Documents/olimp/domli/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async query (file:///Users/leo/Documents/olimp/domli/backend/config/database.js:34:17)
+    at async file:///Users/leo/Documents/olimp/domli/backend/routes/properties.js:310:28 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '197',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1452',
+  routine: 'parserOpenTable'
+}
+2025-06-28T18:40:54: Get property error: error: relation "properties" does not exist
+    at /Users/leo/Documents/olimp/domli/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async query (file:///Users/leo/Documents/olimp/domli/backend/config/database.js:34:17)
+    at async file:///Users/leo/Documents/olimp/domli/backend/routes/properties.js:310:28 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '197',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1452',
+  routine: 'parserOpenTable'
+}
+2025-06-28T18:40:54: [0mGET /api/properties/recommendations [31m500[0m 12.539 ms - 108[0m

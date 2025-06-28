@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import MainPage from './pages/mainPage';
 import LoginPage from './pages/LoginPage';
 import PhotoManagement from './pages/PhotoManagement';
+import PropertyDetail from './pages/PropertyDetail';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -27,6 +28,7 @@ function App() {
           <Route path="/" element={<MainPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/photos" element={<PhotoManagement />} />
+                      <Route path="/property/:id" element={<PropertyDetail />} />
           <Route 
             path="/dashboard" 
             element={

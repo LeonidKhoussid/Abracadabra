@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -16,6 +17,7 @@ export default function MapSection() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   // Load properties data from backend API
   useEffect(() => {
@@ -91,15 +93,36 @@ export default function MapSection() {
             <p class="text-gray-600"><strong>Проект:</strong> ${property.project}</p>
             <p class="text-gray-600"><strong>Сдача:</strong> ${property.completion}</p>
           </div>
-          <button class="mt-3 w-full bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 transition-colors">
+          <button 
+            class="mt-3 w-full bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 transition-colors property-detail-btn" 
+            data-property-id="${property.id}"
+          >
             Подробнее
           </button>
         </div>
       `;
       
-      marker.bindPopup(popupContent, {
+      const popup = L.popup({
         maxWidth: 300,
         className: 'custom-popup'
+      }).setContent(popupContent);
+      
+      marker.bindPopup(popup);
+      
+      // Add event listener for the button when popup opens
+      popup.on('add', () => {
+        // Small delay to ensure the DOM is ready
+        setTimeout(() => {
+          const button = document.querySelector(`[data-property-id="${property.id}"]`);
+          if (button) {
+            button.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Navigating to property:', property.id);
+              navigate(`/property/${property.id}`);
+            });
+          }
+        }, 100);
       });
     });
 

@@ -63,6 +63,8 @@ app.use(compression());
 // CORS configuration
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
   'http://82.97.249.148:5173'
 ];
 
@@ -77,8 +79,9 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }));
 
 // Logging middleware

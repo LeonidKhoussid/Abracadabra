@@ -300,62 +300,107 @@ router.get('/', async (req, res) => {
   }
 });
 
-// @route   GET /api/properties/:id
-// @desc    Get property by ID
+// @route   GET /api/properties/recommendations
+// @desc    Get general property recommendations (public)
 // @access  Public
-router.get('/:id', async (req, res) => {
+router.get('/recommendations', async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const propertyResult = await query(
-      `SELECT 
-        id, name, description, property_type, rooms, area, price, 
-        city, address, developer, completion_date, status,
-        images, amenities, created_at, updated_at
-       FROM properties WHERE id = $1`,
-      [id]
-    );
-
-    if (propertyResult.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Недвижимость не найдена'
+    const properties = [];
+    const csvPath = path.join(__dirname, '../data/properties_with_photos.csv');
+    
+    // Check if CSV file exists
+    if (!fs.existsSync(csvPath)) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Properties data not found' 
       });
     }
 
-    const property = propertyResult.rows[0];
+    // Read and parse CSV
+    return new Promise((resolve, reject) => {
+      fs.createReadStream(csvPath)
+        .pipe(csv())
+        .on('data', (row) => {
+          properties.push(row);
+        })
+        .on('end', () => {
+          try {
+            // Get featured/popular properties (first 6 valid properties)
+            const recommendations = properties
+              .filter(property => {
+                // Skip properties with invalid prices
+                return property.price_total && !property.price_total.includes('*');
+              })
+              .slice(0, 6);
 
-    // If user is authenticated, check if they've viewed this property
-    if (req.user) {
-      await query(
-        `INSERT INTO property_views (user_id, property_id, viewed_at)
-         VALUES ($1, $2, NOW())
-         ON CONFLICT (user_id, property_id) 
-         DO UPDATE SET viewed_at = NOW()`,
-        [req.user.id, id]
-      );
-    }
+            // Format recommendations for response
+            const formattedRecommendations = recommendations.map((property, index) => {
+              const priceString = property.price_total.replace(/,/g, '');
+              const price = parseFloat(priceString);
+              const formattedPrice = price ? `${(price / 1000000).toFixed(1)} млн ₽` : 'Цена по запросу';
+              
+              // Get coordinates for the property
+              const coordinates = getProjectCoordinates(property.project_name, property.developer_name, index);
 
-    res.json({
-      success: true,
-      data: {
-        property
-      }
+              return {
+                id: index + 1,
+                name: `ЖК ${property.project_name}`,
+                description: `${property.property_type} в ${property.project_name}`,
+                property_type: property.property_type,
+                rooms: property.rooms_count,
+                area: property.area ? parseFloat(property.area) : null,
+                price: price,
+                formatted_price: `от ${formattedPrice}`,
+                city: 'Краснодар',
+                address: property.address || 'г. Краснодар',
+                developer: property.developer_name,
+                project: property.project_name,
+                completion_date: property.completion_year,
+                coordinates: coordinates,
+                main_photo_url: property.main_photo_url || null,
+                gallery_photos_urls: property.gallery_photos_urls ? property.gallery_photos_urls.split(',') : []
+              };
+            });
+
+            res.json({
+              success: true,
+              data: {
+                recommendations: formattedRecommendations,
+                total: formattedRecommendations.length,
+                message: 'Рекомендуемые объекты недвижимости'
+              }
+            });
+
+          } catch (error) {
+            console.error('Error processing general recommendations:', error);
+            res.status(500).json({
+              success: false,
+              message: 'Ошибка при обработке рекомендаций'
+            });
+          }
+        })
+        .on('error', (error) => {
+          console.error('Error reading CSV for general recommendations:', error);
+          res.status(500).json({ 
+            success: false, 
+            message: 'Ошибка при чтении данных недвижимости' 
+          });
+        });
     });
 
   } catch (error) {
-    console.error('Get property error:', error);
+    console.error('Get general recommendations error:', error);
     res.status(500).json({
       success: false,
-      message: 'Ошибка сервера при получении недвижимости'
+      message: 'Ошибка сервера при получении рекомендаций'
     });
   }
 });
 
-// @route   GET /api/properties/search/recommendations
+// @route   GET /api/properties/personalized-recommendations
 // @desc    Get personalized property recommendations
 // @access  Private
-router.get('/search/recommendations', async (req, res) => {
+router.get('/personalized-recommendations', async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -379,58 +424,145 @@ router.get('/search/recommendations', async (req, res) => {
     }
 
     const preferences = preferencesResult.rows[0];
-
-    // Build recommendation query based on preferences
-    const whereConditions = [];
-    const values = [];
-    let paramCount = 1;
-
-    if (preferences.property_type) {
-      whereConditions.push(`property_type = $${paramCount}`);
-      values.push(preferences.property_type);
-      paramCount++;
+    const properties = [];
+    const csvPath = path.join(__dirname, '../data/properties_with_photos.csv');
+    
+    // Check if CSV file exists
+    if (!fs.existsSync(csvPath)) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Properties data not found' 
+      });
     }
 
-    if (preferences.rooms) {
-      whereConditions.push(`rooms = $${paramCount}`);
-      values.push(preferences.rooms);
-      paramCount++;
-    }
+    // Read and parse CSV
+    return new Promise((resolve, reject) => {
+      fs.createReadStream(csvPath)
+        .pipe(csv())
+        .on('data', (row) => {
+          properties.push(row);
+        })
+        .on('end', () => {
+          try {
+            // Filter properties based on user preferences
+            let recommendations = properties.filter(property => {
+              // Skip properties with invalid prices
+              if (!property.price_total || property.price_total.includes('*')) {
+                return false;
+              }
 
-    if (preferences.budget) {
-      // Extract numeric value from budget string
-      const budgetMatch = preferences.budget.match(/(\d+)/);
-      if (budgetMatch) {
-        const maxBudget = parseInt(budgetMatch[1]) * 1000000; // Convert to rubles
-        whereConditions.push(`price <= $${paramCount}`);
-        values.push(maxBudget);
-        paramCount++;
-      }
-    }
+              let matches = true;
 
-    const whereClause = whereConditions.length > 0 
-      ? `WHERE ${whereConditions.join(' AND ')}` 
-      : '';
+              // Filter by property type
+              if (preferences.property_type && property.property_type) {
+                const propertyTypeMap = {
+                  'apartment': ['Квартира', 'квартира'],
+                  'penthouse': ['Пентхаус', 'пентхаус'],
+                  'commercial': ['Коммерческая', 'коммерческая']
+                };
+                
+                const allowedTypes = propertyTypeMap[preferences.property_type] || [];
+                if (!allowedTypes.some(type => property.property_type.includes(type))) {
+                  matches = false;
+                }
+              }
 
-    // Get recommended properties
-    const recommendationsResult = await query(
-      `SELECT 
-        id, name, description, property_type, rooms, area, price, 
-        city, address, developer, completion_date, status,
-        images, amenities, created_at
-       FROM properties 
-       ${whereClause}
-       ORDER BY created_at DESC
-       LIMIT 6`,
-      values
-    );
+              // Filter by rooms
+              if (preferences.rooms && property.rooms_count) {
+                const userRooms = preferences.rooms.toString();
+                const propertyRooms = property.rooms_count.toString();
+                
+                if (userRooms === '4+') {
+                  if (parseInt(propertyRooms) < 4) {
+                    matches = false;
+                  }
+                } else if (userRooms !== propertyRooms) {
+                  matches = false;
+                }
+              }
 
-    res.json({
-      success: true,
-      data: {
-        recommendations: recommendationsResult.rows,
-        preferences
-      }
+              // Filter by budget
+              if (preferences.budget && property.price_total) {
+                const budgetMatch = preferences.budget.match(/(\d+)/);
+                if (budgetMatch) {
+                  const maxBudget = parseInt(budgetMatch[1]) * 1000000; // Convert to rubles
+                  const priceString = property.price_total.replace(/,/g, '');
+                  const propertyPrice = parseFloat(priceString);
+                  
+                  if (propertyPrice && propertyPrice > maxBudget) {
+                    matches = false;
+                  }
+                }
+              }
+
+              return matches;
+            });
+
+            // If no matches found, return popular properties instead
+            if (recommendations.length === 0) {
+              recommendations = properties
+                .filter(p => p.price_total && !p.price_total.includes('*'))
+                .slice(0, 6);
+            } else {
+              recommendations = recommendations.slice(0, 6);
+            }
+
+            // Format recommendations for response
+            const formattedRecommendations = recommendations.map((property, index) => {
+              const priceString = property.price_total.replace(/,/g, '');
+              const price = parseFloat(priceString);
+              const formattedPrice = price ? `${(price / 1000000).toFixed(1)} млн ₽` : 'Цена по запросу';
+              
+              // Get coordinates for the property
+              const coordinates = getProjectCoordinates(property.project_name, property.developer_name, index);
+
+              return {
+                id: index + 1,
+                name: `ЖК ${property.project_name}`,
+                description: `${property.property_type} в ${property.project_name}`,
+                property_type: property.property_type,
+                rooms: property.rooms_count,
+                area: property.area ? parseFloat(property.area) : null,
+                price: price,
+                formatted_price: `от ${formattedPrice}`,
+                city: 'Краснодар',
+                address: property.address || 'г. Краснодар',
+                developer: property.developer_name,
+                project: property.project_name,
+                completion_date: property.completion_year,
+                coordinates: coordinates,
+                main_photo_url: property.main_photo_url || null,
+                gallery_photos_urls: property.gallery_photos_urls ? property.gallery_photos_urls.split(',') : []
+              };
+            });
+
+            res.json({
+              success: true,
+              data: {
+                recommendations: formattedRecommendations,
+                preferences: preferences,
+                total: formattedRecommendations.length,
+                message: recommendations.length > 0 ? 
+                  'Рекомендации основаны на ваших предпочтениях' : 
+                  'Показаны популярные объекты (не найдено точных совпадений)'
+              }
+            });
+
+          } catch (error) {
+            console.error('Error processing recommendations:', error);
+            res.status(500).json({
+              success: false,
+              message: 'Ошибка при обработке рекомендаций'
+            });
+          }
+        })
+        .on('error', (error) => {
+          console.error('Error reading CSV for recommendations:', error);
+          res.status(500).json({ 
+            success: false, 
+            message: 'Ошибка при чтении данных недвижимости' 
+          });
+        });
     });
 
   } catch (error) {
@@ -438,6 +570,117 @@ router.get('/search/recommendations', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Ошибка сервера при получении рекомендаций'
+    });
+  }
+});
+
+// @route   GET /api/properties/:id
+// @desc    Get property by ID from CSV
+// @access  Public
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const propertyId = parseInt(id);
+    
+    if (isNaN(propertyId) || propertyId < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Неверный ID недвижимости'
+      });
+    }
+
+    const properties = [];
+    const csvPath = path.join(__dirname, '../data/properties_with_photos.csv');
+    
+    // Check if CSV file exists
+    if (!fs.existsSync(csvPath)) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Данные о недвижимости не найдены' 
+      });
+    }
+
+    // Read and parse CSV
+    return new Promise((resolve, reject) => {
+      fs.createReadStream(csvPath)
+        .pipe(csv())
+        .on('data', (row) => {
+          properties.push(row);
+        })
+        .on('end', () => {
+          try {
+            // Get property by index (ID - 1)
+            const propertyIndex = propertyId - 1;
+            
+            if (propertyIndex < 0 || propertyIndex >= properties.length) {
+              return res.status(404).json({
+                success: false,
+                message: 'Недвижимость не найдена'
+              });
+            }
+
+            const propertyData = properties[propertyIndex];
+            
+            // Parse price
+            const priceString = propertyData.price_total ? propertyData.price_total.replace(/,/g, '') : '';
+            const price = parseFloat(priceString);
+            const formattedPrice = price ? `${(price / 1000000).toFixed(1)} млн ₽` : 'Цена по запросу';
+            
+            // Get coordinates for the property
+            const coordinates = getProjectCoordinates(propertyData.project_name, propertyData.developer_name, propertyIndex);
+            
+            // Format property data
+            const property = {
+              id: propertyId,
+              name: `ЖК ${propertyData.project_name}`,
+              description: `${propertyData.property_type} в ${propertyData.project_name}`,
+              property_type: propertyData.property_type,
+              rooms: propertyData.rooms_count,
+              area: propertyData.area ? parseFloat(propertyData.area) : null,
+              price: price,
+              formatted_price: `от ${formattedPrice}`,
+              city: 'Краснодар',
+              address: propertyData.address || 'г. Краснодар',
+              developer: propertyData.developer_name,
+              project: propertyData.project_name,
+              completion_date: propertyData.completion_year,
+              coordinates: coordinates,
+              main_photo_url: propertyData.main_photo_url || null,
+              gallery_photos_urls: propertyData.gallery_photos_urls ? propertyData.gallery_photos_urls.split(',') : [],
+              floor_plan_url: propertyData.floor_plan_url || null,
+              // Add additional details
+              raw_data: propertyData // Include original CSV data for any additional fields
+            };
+
+            res.json({
+              success: true,
+              data: {
+                property
+              }
+            });
+
+          } catch (error) {
+            console.error('Error processing property data:', error);
+            res.status(500).json({
+              success: false,
+              message: 'Ошибка при обработке данных недвижимости'
+            });
+          }
+        })
+        .on('error', (error) => {
+          console.error('Error reading CSV for property details:', error);
+          res.status(500).json({ 
+            success: false, 
+            message: 'Ошибка при чтении данных недвижимости' 
+          });
+        });
+    });
+
+  } catch (error) {
+    console.error('Get property error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка сервера при получении недвижимости'
     });
   }
 });

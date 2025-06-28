@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 class ApiService {
   constructor() {
@@ -121,6 +121,36 @@ class ApiService {
 
   async getPropertyById(id) {
     const response = await fetch(`${this.baseURL}/properties/${id}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async getPropertyDetails(id) {
+    const response = await fetch(`${this.baseURL}/properties/${id}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
+  }
+
+  // Recommendations methods
+  async getRecommendations() {
+    const response = await fetch(`${this.baseURL}/properties/recommendations`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async getPersonalizedRecommendations() {
+    const response = await fetch(`${this.baseURL}/properties/personalized-recommendations`, {
       method: 'GET',
       headers: this.getAuthHeaders()
     });
