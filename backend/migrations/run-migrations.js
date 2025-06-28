@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import { pool } from '../config/database.js';
 import dotenv from 'dotenv';
 

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const cities = [
   'Краснодар',
@@ -24,6 +25,7 @@ export default function HeroSection() {
   const [mode, setMode] = useState('buy');
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
 
   // Закрытие dropdown при клике вне
   function handleClickOutside(e) {
@@ -40,6 +42,10 @@ export default function HeroSection() {
 
   const handleLoginClick = () => {
     navigate('/login');
+  };
+
+  const handleDashboardClick = () => {
+    navigate('/dashboard');
   };
 
   return (
@@ -91,7 +97,7 @@ export default function HeroSection() {
       </div>
       {/* Правая часть */}
       <div className="hero-section__right">
-        {/* Dropdown и кнопка Войти */}
+        {/* Dropdown и кнопка Войти/Личный кабинет */}
         <div className="hero-section__city-login">
           <div ref={dropdownRef} className="hero-section__dropdown">
             <button
@@ -116,12 +122,21 @@ export default function HeroSection() {
               </div>
             )}
           </div>
-          <button 
-            className="hero-section__login-btn"
-            onClick={handleLoginClick}
-          >
-            Войти
-          </button>
+          {!isAuthenticated ? (
+            <button 
+              className="hero-section__login-btn"
+              onClick={handleLoginClick}
+            >
+              Войти
+            </button>
+          ) : (
+            <button 
+              className="hero-section__login-btn"
+              onClick={handleDashboardClick}
+            >
+              Личный кабинет
+            </button>
+          )}
         </div>
         <img
           src="src/assets/firstBlockImg.png"

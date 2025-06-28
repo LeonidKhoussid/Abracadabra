@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const RegistrationForm = () => {
   const [step, setStep] = useState(1);
@@ -21,6 +23,22 @@ const RegistrationForm = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { register, error, clearError, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Clear error when component mounts
+  useEffect(() => {
+    clearError();
+  }, [clearError]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -46,13 +64,33 @@ const RegistrationForm = () => {
     
     if (!formData.password) newErrors.password = 'Пароль обязателен';
     else if (formData.password.length < 6) newErrors.password = 'Пароль должен содержать минимум 6 символов';
+    else if (!/^(?=.*[a-zA-Z])(?=.*\d)/.test(formData.password)) {
+      newErrors.password = 'Пароль должен содержать буквы и цифры';
+    }
     
     if (!formData.confirmPassword) newErrors.confirmPassword = 'Подтвердите пароль';
     else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Пароли не совпадают';
     
     if (!formData.firstName) newErrors.firstName = 'Имя обязательно';
+    else if (formData.firstName.length < 2 || formData.firstName.length > 50) {
+      newErrors.firstName = 'Имя должно содержать от 2 до 50 символов';
+    }
+    else if (!/^[a-zA-Zа-яёА-ЯЁ\s-]+$/.test(formData.firstName)) {
+      newErrors.firstName = 'Имя может содержать только буквы (русские или английские), пробелы и дефисы';
+    }
+    
     if (!formData.lastName) newErrors.lastName = 'Фамилия обязательна';
+    else if (formData.lastName.length < 2 || formData.lastName.length > 50) {
+      newErrors.lastName = 'Фамилия должна содержать от 2 до 50 символов';
+    }
+    else if (!/^[a-zA-Zа-яёА-ЯЁ\s-]+$/.test(formData.lastName)) {
+      newErrors.lastName = 'Фамилия может содержать только буквы (русские или английские), пробелы и дефисы';
+    }
+    
     if (!formData.phone) newErrors.phone = 'Телефон обязателен';
+    else if (!/^\+7\s?\(\d{3}\)\s?\d{3}-\d{2}-\d{2}$/.test(formData.phone)) {
+      newErrors.phone = 'Телефон должен быть в формате +7 (999) 123-45-67';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -62,6 +100,10 @@ const RegistrationForm = () => {
     const newErrors = {};
     
     if (!formData.propertyType) newErrors.propertyType = 'Выберите тип недвижимости';
+    else if (!['apartment', 'penthouse', 'commercial'].includes(formData.propertyType)) {
+      newErrors.propertyType = 'Неверный тип недвижимости';
+    }
+    
     if (!formData.budget) newErrors.budget = 'Выберите бюджет';
     if (!formData.moveInDate) newErrors.moveInDate = 'Выберите срок заезда';
     if (!formData.livingWith) newErrors.livingWith = 'Выберите с кем будете жить';
@@ -89,15 +131,52 @@ const RegistrationForm = () => {
     setStep(step - 1);
   };
 
-  const handleSubmit = () => {
-    console.log('Form submitted:', formData);
-    // Here you would typically send the data to your backend
-    alert('Регистрация успешно завершена!');
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      // Prepare data for backend
+      const userData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        propertyType: formData.propertyType,
+        rooms: formData.rooms || null,
+        area: formData.area || null,
+        budget: formData.budget,
+        moveInDate: formData.moveInDate,
+        livingWith: formData.livingWith
+      };
+
+      const result = await register(userData);
+      if (result.success) {
+        navigate('/');
+      } else {
+        setErrors({ general: result.message });
+      }
+    } catch (error) {
+      setErrors({ general: 'Произошла ошибка при регистрации' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderStep1 = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Регистрация</h2>
+      
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {errors.general && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {errors.general}
+        </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -113,6 +192,7 @@ const RegistrationForm = () => {
               errors.firstName ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="Введите ваше имя"
+            disabled={isSubmitting}
           />
           {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
         </div>
@@ -130,6 +210,7 @@ const RegistrationForm = () => {
               errors.lastName ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="Введите вашу фамилию"
+            disabled={isSubmitting}
           />
           {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
         </div>
@@ -148,6 +229,7 @@ const RegistrationForm = () => {
             errors.email ? 'border-red-500' : 'border-gray-300'
           }`}
           placeholder="example@email.com"
+          disabled={isSubmitting}
         />
         {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
       </div>
@@ -165,6 +247,7 @@ const RegistrationForm = () => {
             errors.phone ? 'border-red-500' : 'border-gray-300'
           }`}
           placeholder="+7 (999) 123-45-67"
+          disabled={isSubmitting}
         />
         {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
       </div>
@@ -183,6 +266,7 @@ const RegistrationForm = () => {
               errors.password ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="Минимум 6 символов"
+            disabled={isSubmitting}
           />
           {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
         </div>
@@ -200,6 +284,7 @@ const RegistrationForm = () => {
               errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="Повторите пароль"
+            disabled={isSubmitting}
           />
           {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
         </div>
@@ -403,7 +488,12 @@ const RegistrationForm = () => {
             {step > 1 && (
               <button
                 onClick={handleBack}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isSubmitting}
+                className={`px-6 py-3 border border-gray-300 text-gray-700 rounded-lg transition-colors ${
+                  isSubmitting 
+                    ? 'bg-gray-100 cursor-not-allowed' 
+                    : 'hover:bg-gray-50'
+                }`}
               >
                 Назад
               </button>
@@ -411,11 +501,21 @@ const RegistrationForm = () => {
             
             <button
               onClick={handleNext}
-              className={`px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${
+              disabled={isSubmitting}
+              className={`px-6 py-3 bg-blue-600 text-white rounded-lg transition-colors ${
                 step === 1 ? 'ml-auto' : ''
+              } ${
+                isSubmitting 
+                  ? 'bg-blue-400 cursor-not-allowed' 
+                  : 'hover:bg-blue-700'
               }`}
             >
-              {step === 1 ? 'Далее' : 'Завершить регистрацию'}
+              {isSubmitting 
+                ? 'Обработка...' 
+                : step === 1 
+                  ? 'Далее' 
+                  : 'Завершить регистрацию'
+              }
             </button>
           </div>
         </div>

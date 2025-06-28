@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 import RegistrationForm from '../components/RegistrationForm';
 
 function LoginPage() {
@@ -9,6 +10,22 @@ function LoginPage() {
     password: ''
   });
   const [loginErrors, setLoginErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { login, register, error, clearError, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Clear error when switching between login/register
+  useEffect(() => {
+    clearError();
+  }, [isLogin, clearError]);
 
   const handleLoginInputChange = (e) => {
     const { name, value } = e.target;
@@ -37,18 +54,40 @@ function LoginPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     if (validateLogin()) {
-      console.log('Login data:', loginData);
-      // Here you would typically send the data to your backend
-      alert('Вход выполнен успешно!');
+      setIsSubmitting(true);
+      try {
+        const result = await login(loginData);
+        if (result.success) {
+          navigate('/');
+        } else {
+          setLoginErrors({ general: result.message });
+        }
+      } catch (error) {
+        setLoginErrors({ general: 'Произошла ошибка при входе' });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
   const renderLoginForm = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Вход в аккаунт</h2>
+      
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {loginErrors.general && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {loginErrors.general}
+        </div>
+      )}
       
       <form onSubmit={handleLoginSubmit} className="space-y-6">
         <div>
@@ -64,6 +103,7 @@ function LoginPage() {
               loginErrors.email ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="example@email.com"
+            disabled={isSubmitting}
           />
           {loginErrors.email && <p className="text-red-500 text-sm mt-1">{loginErrors.email}</p>}
         </div>
@@ -81,6 +121,7 @@ function LoginPage() {
               loginErrors.password ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="Введите пароль"
+            disabled={isSubmitting}
           />
           {loginErrors.password && <p className="text-red-500 text-sm mt-1">{loginErrors.password}</p>}
         </div>
@@ -100,9 +141,14 @@ function LoginPage() {
 
         <button
           type="submit"
-          className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+          disabled={isSubmitting}
+          className={`w-full px-6 py-3 bg-blue-600 text-white rounded-lg transition-colors font-semibold ${
+            isSubmitting 
+              ? 'bg-blue-400 cursor-not-allowed' 
+              : 'hover:bg-blue-700'
+          }`}
         >
-          Войти
+          {isSubmitting ? 'Вход...' : 'Войти'}
         </button>
       </form>
 
