@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
+import api, { reservationService } from '../services/api';
+import Toast from './Toast';
 
 export default function Recommendations() {
   const [properties, setProperties] = useState([]);
@@ -10,6 +11,9 @@ export default function Recommendations() {
   const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState('all');
   const [showAll, setShowAll] = useState(false);
+  const [favoritedProperties, setFavoritedProperties] = useState(new Set());
+  const [favoritingProperties, setFavoritingProperties] = useState(new Set());
+  const [toasts, setToasts] = useState([]);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -53,6 +57,112 @@ export default function Recommendations() {
 
   const handlePropertyClick = (propertyId) => {
     navigate(`/property/${propertyId}`);
+  };
+
+  // Toast functions
+  const showToast = (message, type = 'success') => {
+    const id = Date.now();
+    const newToast = { id, message, type };
+    setToasts(prev => [...prev, newToast]);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
+
+  // Check which properties are favorited when component loads
+  useEffect(() => {
+    const checkFavorites = async () => {
+      if (!isAuthenticated || properties.length === 0) return;
+      
+      try {
+        // Get user's reservations and find favorites (those with "Избранное:" prefix in notes)
+        const response = await reservationService.getUserReservations();
+        
+        if (response.success) {
+          const favorited = new Set();
+          response.reservations.forEach(reservation => {
+            if (reservation.notes && reservation.notes.startsWith('Избранное:')) {
+              favorited.add(reservation.property_id);
+            }
+          });
+          setFavoritedProperties(favorited);
+        }
+      } catch (error) {
+        console.error('Error checking favorites status:', error);
+      }
+    };
+
+    checkFavorites();
+  }, [isAuthenticated, properties]);
+
+  // Handle favorite toggle
+  const handleFavoriteToggle = async (e, property) => {
+    e.stopPropagation(); // Prevent property card click
+    
+    if (!isAuthenticated) {
+      showToast('Для добавления в избранное необходимо войти в систему', 'error');
+      navigate('/login');
+      return;
+    }
+
+    const propertyId = property.id;
+    const isFavorited = favoritedProperties.has(propertyId);
+    
+    if (isFavorited) {
+      // Remove from favorites
+      setFavoritingProperties(prev => new Set(prev).add(propertyId));
+      
+      try {
+        const response = await reservationService.cancelReservationByProperty(propertyId);
+        
+        if (response.success) {
+          setFavoritedProperties(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(propertyId);
+            return newSet;
+          });
+          showToast(`"${property.name}" удален из избранного`, 'success');
+        } else {
+          throw new Error(response.error || 'Ошибка при удалении из избранного');
+        }
+      } catch (error) {
+        console.error('Error removing from favorites:', error);
+        showToast(error.message || 'Ошибка при удалении из избранного', 'error');
+      } finally {
+        setFavoritingProperties(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(propertyId);
+          return newSet;
+        });
+      }
+    } else {
+      // Add to favorites
+      setFavoritingProperties(prev => new Set(prev).add(propertyId));
+      
+      try {
+        const response = await reservationService.createReservation(
+          propertyId, 
+          `Избранное: добавлено в избранное пользователем`
+        );
+        
+        if (response.success) {
+          setFavoritedProperties(prev => new Set(prev).add(propertyId));
+          showToast(`"${property.name}" добавлен в избранное`, 'success');
+        } else {
+          throw new Error(response.error || 'Ошибка при добавлении в избранное');
+        }
+      } catch (error) {
+        console.error('Error adding to favorites:', error);
+        showToast(error.message || 'Ошибка при добавлении в избранное', 'error');
+      } finally {
+        setFavoritingProperties(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(propertyId);
+          return newSet;
+        });
+      }
+    }
   };
 
   const filterProperties = (status) => {
@@ -252,33 +362,83 @@ export default function Recommendations() {
           "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" : 
           "flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
         }>
-          {displayProperties.map((property, i) => (
-            <div 
-              key={property.id || i} 
-              className={`bg-white rounded-xl shadow p-4 cursor-pointer hover:shadow-lg transition-shadow duration-200 ${
-                !showAll ? 'min-w-[250px] flex-shrink-0' : ''
-              }`}
-              onClick={() => handlePropertyClick(property.id)}
-            >
-              <div className="relative">
-                <img 
-                  src={property.main_photo_url || getDefaultImage()} 
-                  alt={property.name} 
-                  className="rounded-lg mb-2 w-full h-40 object-cover"
-                  onError={(e) => {
-                    e.target.src = getDefaultImage();
-                  }}
-                />
-                <div className="absolute top-2 right-2">
-                  {getStatusBadge(property)}
+          {displayProperties.map((property, i) => {
+            const isFavorited = favoritedProperties.has(property.id);
+            const isFavoriting = favoritingProperties.has(property.id);
+            
+            return (
+              <div 
+                key={property.id || i} 
+                className={`bg-white rounded-xl shadow p-4 hover:shadow-lg transition-shadow duration-200 ${
+                  !showAll ? 'min-w-[250px] flex-shrink-0' : ''
+                }`}
+              >
+                <div className="relative">
+                  <img 
+                    src={property.main_photo_url || getDefaultImage()} 
+                    alt={property.name} 
+                    className="rounded-lg mb-2 w-full h-40 object-cover cursor-pointer"
+                    onClick={() => handlePropertyClick(property.id)}
+                    onError={(e) => {
+                      e.target.src = getDefaultImage();
+                    }}
+                  />
+                  <div className="absolute top-2 right-2">
+                    {getStatusBadge(property)}
+                  </div>
+                  {/* Heart icon for favorites */}
+                  {isAuthenticated && (
+                    <button
+                      onClick={(e) => handleFavoriteToggle(e, property)}
+                      disabled={isFavoriting}
+                      className={`absolute top-2 left-2 p-1.5 rounded-full transition-all duration-200 ${
+                        isFavoriting 
+                          ? 'bg-gray-200 cursor-not-allowed' 
+                          : 'bg-white/80 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md'
+                      }`}
+                      title={isFavorited ? 'Удалить из избранного' : 'Добавить в избранное'}
+                    >
+                      {isFavoriting ? (
+                        <div className="w-5 h-5 flex items-center justify-center">
+                          <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      ) : (
+                        <svg 
+                          className={`w-5 h-5 transition-colors ${
+                            isFavorited 
+                              ? 'text-red-500 fill-current' 
+                              : 'text-gray-600 hover:text-red-500'
+                          }`}
+                          fill={isFavorited ? 'currentColor' : 'none'}
+                          stroke="currentColor" 
+                          strokeWidth="2" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                      )}
+                    </button>
+                  )}
                 </div>
+                <div 
+                  className="cursor-pointer" 
+                  onClick={() => handlePropertyClick(property.id)}
+                >
+                  <div className="font-semibold text-lg mb-1">{property.name}</div>
+                  <div className="text-gray-500 text-sm mb-1">{property.address}</div>
+                  <div className="text-gray-400 text-xs mb-1">{property.property_type}</div>
+                  <div className="font-bold text-blue-700 mb-3">{property.formatted_price}</div>
+                </div>
+                
+                <button
+                  onClick={() => handlePropertyClick(property.id)}
+                  className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Подробнее
+                </button>
               </div>
-              <div className="font-semibold text-lg mb-1">{property.name}</div>
-              <div className="text-gray-500 text-sm mb-1">{property.address}</div>
-              <div className="text-gray-400 text-xs mb-1">{property.property_type}</div>
-              <div className="font-bold text-blue-700">{property.formatted_price}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         
         {/* Fade indicator for horizontal scroll */}
@@ -322,6 +482,17 @@ export default function Recommendations() {
           Рекомендации не найдены
         </div>
       )}
+      
+      {/* Toast notifications */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          duration={3000}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
     </section>
   );
 } 

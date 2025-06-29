@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import bitrixService from '../services/bitrix';
+import { reservationService } from '../services/api';
+import Toast from './Toast';
 
 const CRMForm = ({ isOpen, onClose, propertyData = {}, userData = null, isAuthenticated = false }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -9,6 +11,7 @@ const CRMForm = ({ isOpen, onClose, propertyData = {}, userData = null, isAuthen
     email: '',
     message: ''
   });
+  const [toasts, setToasts] = useState([]);
 
   // Auto-fill form when user is authenticated
   useEffect(() => {
@@ -52,6 +55,17 @@ const CRMForm = ({ isOpen, onClose, propertyData = {}, userData = null, isAuthen
     }));
   };
 
+  // Toast functions
+  const showToast = (message, type = 'success') => {
+    const id = Date.now();
+    const newToast = { id, message, type };
+    setToasts(prev => [...prev, newToast]);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -68,10 +82,12 @@ const CRMForm = ({ isOpen, onClose, propertyData = {}, userData = null, isAuthen
 
 === ИНФОРМАЦИЯ О НЕДВИЖИМОСТИ ===
 Название: ${propertyData?.name || 'Не указано'}
-Расположение: ${propertyData?.location || 'Не указано'}
-Цена: ${propertyData?.price || 'Не указано'}
+Расположение: ${propertyData?.location || propertyData?.address || 'Не указано'}
+Цена: ${propertyData?.price || propertyData?.formatted_price || 'Не указано'}
 Площадь: ${propertyData?.area || 'Не указано'}
 Комнат: ${propertyData?.rooms || 'Не указано'}
+Застройщик: ${propertyData?.developer || 'Не указано'}
+Проект: ${propertyData?.project || 'Не указано'}
 
 === КОНТАКТНЫЕ ДАННЫЕ ===
 Имя: ${formData.name}
@@ -81,14 +97,64 @@ Email: ${formData.email || 'Не указан'}
 Источник: Сайт недвижимости
 Дата: ${new Date().toLocaleString('ru-RU')}
         `.trim(),
-        source: 'Сайт недвижимости'
+        source: 'Сайт недвижимости',
+        // Цена сделки
+        opportunity: bitrixService.parsePrice(propertyData?.price || propertyData?.formatted_price || '0'),
+        currency: 'RUB',
+        // Дополнительные поля недвижимости
+        propertyId: propertyData?.id,
+        propertyType: propertyData?.property_type,
+        propertyArea: propertyData?.area,
+        propertyRooms: propertyData?.rooms
       };
 
-      // Отправка в Битрикс24
-      const result = await bitrixService.sendLead(leadData);
+      // Логирование для отладки цены
+      const priceValue = propertyData?.price || propertyData?.formatted_price || '0';
+      console.log('🔍 Отладка цены - ДО парсинга:', {
+        priceValue: priceValue,
+        priceValueType: typeof priceValue,
+        originalPrice: propertyData?.price,
+        originalPriceType: typeof propertyData?.price,
+        formattedPrice: propertyData?.formatted_price,
+        formattedPriceType: typeof propertyData?.formatted_price,
+        propertyData: propertyData
+      });
+      
+      const parsedPrice = bitrixService.parsePrice(priceValue);
+      console.log('🔍 Отладка цены - ПОСЛЕ парсинга:', {
+        parsedPrice: parsedPrice,
+        parsedPriceType: typeof parsedPrice
+      });
+
+      // Отправка в Битрикс24 (используем сделку для лучшей работы с ценами)
+      const result = await bitrixService.sendDeal(leadData);
 
       if (result.success) {
-        alert('✅ Заявка успешно отправлена! Менеджер свяжется с вами в ближайшее время.');
+        let successMessage = `Заявка успешно отправлена! Создан контакт (ID: ${result.contactId}) и сделка (ID: ${result.dealId}) в CRM. Менеджер свяжется с вами в ближайшее время.`;
+        
+        // Создаем бронирование для авторизованных пользователей
+        if (isAuthenticated && propertyData?.id) {
+          try {
+            console.log('🔖 CRMForm: Creating reservation for property', propertyData.id);
+            const reservationResponse = await reservationService.createReservation(
+              propertyData.id, 
+              `Заявка через форму: ${formData.message || 'Интерес к объекту'}`
+            );
+            
+            if (reservationResponse.success) {
+              console.log('✅ CRMForm: Reservation created successfully');
+              successMessage += ` Объект добавлен в ваши забронированные.`;
+            } else {
+              console.warn('⚠️ CRMForm: Reservation creation failed:', reservationResponse.error);
+              // Don't show error for reservation failure, as the main form submission was successful
+            }
+          } catch (reservationError) {
+            console.error('❌ CRMForm: Error creating reservation:', reservationError);
+            // Don't show error for reservation failure, as the main form submission was successful
+          }
+        }
+        
+        showToast(successMessage, 'success');
         
         // Сброс формы (с учетом авторизации)
         if (isAuthenticated && userData) {
@@ -107,15 +173,17 @@ Email: ${formData.email || 'Не указан'}
           });
         }
         
-        // Закрытие модального окна
-        onClose();
+        // Закрытие модального окна после небольшой задержки, чтобы показать toast
+        setTimeout(() => {
+          onClose();
+        }, 3000); // Slightly longer delay to show the reservation message
       } else {
         throw new Error(result.error || 'Неизвестная ошибка');
       }
 
     } catch (error) {
       console.error('Ошибка отправки заявки:', error);
-      alert('❌ Ошибка отправки заявки. Попробуйте позже или свяжитесь с нами по телефону.');
+      showToast('Ошибка отправки заявки. Попробуйте позже или свяжитесь с нами по телефону.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -273,6 +341,17 @@ Email: ${formData.email || 'Не указан'}
           </div>
         </form>
       </div>
+      
+      {/* Toast notifications */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          duration={4000}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
     </div>
   );
 };

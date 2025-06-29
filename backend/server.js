@@ -13,6 +13,7 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import propertyRoutes from './routes/properties.js';
 import photoRoutes from './routes/photos.js';
+import reservationRoutes from './routes/reservations.js';
 
 // Import database connection
 import { pool } from './config/database.js';
@@ -43,10 +44,10 @@ app.use(helmet({
   },
 }));
 
-// Rate limiting
+// Rate limiting (more lenient for development)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // 1000 for dev, 100 for prod
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -106,6 +107,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/photos', photoRoutes);
+app.use('/api/reservations', reservationRoutes);
 
 // API documentation endpoint
 app.get('/api', (req, res) => {

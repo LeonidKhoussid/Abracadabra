@@ -4,13 +4,14 @@ import { useAuth } from "../context/AuthContext";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Toast from "../components/Toast";
-import apiService from "../services/api";
+import apiService, { reservationService } from "../services/api";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated, updateUser } = useAuth();
   const [activeSection, setActiveSection] = useState("reserved");
   const [reservedProperties, setReservedProperties] = useState([]);
+  const [favoriteProperties, setFavoriteProperties] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // Mortgage calculator state
@@ -78,52 +79,96 @@ const ProfilePage = () => {
     }
   }, [user]);
 
-  // Mock data for reserved properties (you can replace with API call)
+  // Load user's reserved properties
   useEffect(() => {
-    // Simulate API call
-    setLoading(true);
-    setTimeout(() => {
-      setReservedProperties([
-        {
-          id: 1,
-          type: "Студия",
-          area: "20 м²",
-          address: "г. Краснодар, улица им. Александра Гикало, 11",
-          floor: "12",
-          deadline: "Сдан",
-          image: "/api/placeholder/120/80",
-        },
-        {
-          id: 2,
-          type: "Студия",
-          area: "20 м²",
-          address: "г. Краснодар, улица им. Александра Гикало, 11",
-          floor: "12",
-          deadline: "Сдан",
-          image: "/api/placeholder/120/80",
-        },
-        {
-          id: 3,
-          type: "Студия",
-          area: "20 м²",
-          address: "г. Краснодар, улица им. Александра Гикало, 11",
-          floor: "12",
-          deadline: "Сдан",
-          image: "/api/placeholder/120/80",
-        },
-        {
-          id: 4,
-          type: "Студия",
-          area: "20 м²",
-          address: "г. Краснодар, улица им. Александра Гикало, 11",
-          floor: "12",
-          deadline: "Сдан",
-          image: "/api/placeholder/120/80",
-        },
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    const loadReservedProperties = async () => {
+      console.log('🔍 ProfilePage: loadReservedProperties called', { isAuthenticated });
+      
+      if (!isAuthenticated) {
+        console.log('❌ ProfilePage: User not authenticated, skipping load');
+        return;
+      }
+      
+      console.log('✅ ProfilePage: User authenticated, loading reservations...');
+      setLoading(true);
+      
+      try {
+        // Get user's reservations
+        console.log('📡 ProfilePage: Calling getUserReservations...');
+        const reservationsResponse = await reservationService.getUserReservations();
+        console.log('📥 ProfilePage: Reservations response:', reservationsResponse);
+        
+        if (reservationsResponse.success) {
+          console.log(`📊 ProfilePage: Found ${reservationsResponse.reservations.length} reservations`);
+          
+          // Get all properties to match with reservations
+          console.log('📡 ProfilePage: Calling getRecommendations...');
+          const propertiesResponse = await apiService.getRecommendations();
+          console.log('📥 ProfilePage: Properties response:', propertiesResponse);
+          
+          if (propertiesResponse.success) {
+            const propertiesData = propertiesResponse.data?.recommendations || propertiesResponse.properties || [];
+            console.log(`📊 ProfilePage: Found ${propertiesData.length} total properties`);
+            
+            // Separate reservations from favorites based on notes
+            const reservedProps = [];
+            const favoriteProps = [];
+            
+            reservationsResponse.reservations.forEach(reservation => {
+              console.log(`🔗 ProfilePage: Processing reservation for property ${reservation.property_id}`);
+              const property = propertiesData.find(p => p.id === reservation.property_id);
+              
+              const propertyData = property ? {
+                ...property,
+                reservationId: reservation.id,
+                reservationDate: reservation.reservation_date,
+                expiresAt: reservation.expires_at,
+                notes: reservation.notes
+              } : {
+                id: reservation.property_id,
+                reservationId: reservation.id,
+                name: `Объект #${reservation.property_id}`,
+                type: "Недвижимость",
+                area: "Не указано",
+                address: "Адрес не найден",
+                floor: "Не указано",
+                deadline: "Не указано",
+                main_photo_url: "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=400&q=80",
+                reservationDate: reservation.reservation_date,
+                expiresAt: reservation.expires_at,
+                notes: reservation.notes
+              };
+              
+              // Check if it's a favorite (notes start with "Избранное:") or reservation (from form)
+              if (reservation.notes && reservation.notes.startsWith('Избранное:')) {
+                console.log(`❤️ ProfilePage: Adding to favorites: ${reservation.property_id}`);
+                favoriteProps.push(propertyData);
+              } else {
+                console.log(`📋 ProfilePage: Adding to reservations: ${reservation.property_id}`);
+                reservedProps.push(propertyData);
+              }
+            });
+            
+            console.log(`🎯 ProfilePage: Setting ${reservedProps.length} reserved properties and ${favoriteProps.length} favorites`);
+            setReservedProperties(reservedProps);
+            setFavoriteProperties(favoriteProps);
+          } else {
+            console.error('❌ ProfilePage: Properties response not successful:', propertiesResponse);
+          }
+        } else {
+          console.error('❌ ProfilePage: Reservations response not successful:', reservationsResponse);
+        }
+      } catch (error) {
+        console.error('💥 ProfilePage: Error loading reserved properties:', error);
+        showToast('Ошибка при загрузке забронированных объектов', 'error');
+      } finally {
+        setLoading(false);
+        console.log('🏁 ProfilePage: loadReservedProperties finished');
+      }
+    };
+
+    loadReservedProperties();
+  }, [isAuthenticated]);
 
   const sidebarItems = [
     { id: "reserved", label: "Забронированные", active: true },
@@ -217,6 +262,8 @@ const ProfilePage = () => {
   const removeToast = (id) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   };
+
+
 
   // Settings functions
   const handleSettingsChange = (field, value) => {
@@ -411,6 +458,26 @@ const ProfilePage = () => {
       );
     }
 
+    if (reservedProperties.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <div className="text-gray-400 text-6xl mb-4">📋</div>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">
+            Нет забронированных объектов
+          </h3>
+          <p className="text-gray-500 mb-4">
+            Объекты появятся здесь после обращения к менеджеру
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Посмотреть объекты
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {reservedProperties.map((property) => (
@@ -420,11 +487,14 @@ const ProfilePage = () => {
           >
             <div className="flex gap-4">
               {/* Property Image */}
-              <div className="w-24 h-20 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                <div className="w-full h-full bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center">
-                  <div className="text-xs text-gray-500">План</div>
-                </div>
-              </div>
+                <img 
+                  src={property.main_photo_url || property.image || 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=400&q=80'} 
+                  alt="Property" 
+                  className="w-24 h-20 object-cover rounded"
+                  onError={(e) => {
+                    e.target.src = 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=400&q=80';
+                  }}
+                />
 
               {/* Property Details */}
               <div className="flex-1 min-w-0">
@@ -444,16 +514,139 @@ const ProfilePage = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 text-sm text-gray-600">
                     <span>
-                      Этаж <strong>{property.floor}</strong>
+                      Этаж <strong>{property.floor || 'Не указано'}</strong>
                     </span>
                     <span>
                       срок <strong>{property.deadline}</strong>
                     </span>
                   </div>
+                </div>
 
+                {/* Reservation info */}
+                {property.reservationDate && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    Забронировано: {new Date(property.reservationDate).toLocaleDateString('ru-RU')}
+                    {property.expiresAt && (
+                      <span className="ml-2">
+                        • Истекает: {new Date(property.expiresAt).toLocaleDateString('ru-RU')}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Action button */}
+                <div className="mt-3">
                   <button
                     onClick={() => navigate(`/property/${property.id}`)}
-                    className="bg-blue-600 text-white px-4 py-1.5 rounded text-sm hover:bg-blue-700 transition-colors"
+                    className="bg-blue-600 text-white px-4 py-1.5 rounded text-sm hover:bg-blue-700 transition-colors w-full"
+                  >
+                    Подробнее
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderFavoriteProperties = () => {
+    if (loading) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="bg-white rounded-lg p-4 shadow-sm animate-pulse"
+            >
+              <div className="flex gap-4">
+                <div className="w-24 h-20 bg-gray-200 rounded"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded mb-1"></div>
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (favoriteProperties.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <div className="text-gray-400 text-6xl mb-4">❤️</div>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">
+            Нет избранных объектов
+          </h3>
+          <p className="text-gray-500 mb-4">
+            Добавляйте объекты в избранное, нажимая на сердечко
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Посмотреть объекты
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {favoriteProperties.map((property) => (
+          <div
+            key={property.id}
+            className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
+          >
+            <div className="flex gap-4">
+              {/* Property Image */}
+              <img 
+                src={property.main_photo_url || property.image || 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=400&q=80'} 
+                alt="Property" 
+                className="w-24 h-20 object-cover rounded"
+                onError={(e) => {
+                  e.target.src = 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=400&q=80';
+                }}
+              />
+
+              {/* Property Details */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {property.name || property.type}{" "}
+                    <span className="text-gray-600 font-normal">
+                      {property.area}
+                    </span>
+                  </h3>
+                </div>
+
+                <p className="text-sm text-gray-600 mb-3 leading-relaxed">
+                  {property.address}
+                </p>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <span>
+                      {property.formatted_price || 'Цена не указана'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Favorite info */}
+                {property.reservationDate && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    Добавлено в избранное: {new Date(property.reservationDate).toLocaleDateString('ru-RU')}
+                  </div>
+                )}
+
+                {/* Action button */}
+                <div className="mt-3">
+                  <button
+                    onClick={() => navigate(`/property/${property.id}`)}
+                    className="bg-blue-600 text-white px-4 py-1.5 rounded text-sm hover:bg-blue-700 transition-colors w-full"
                   >
                     Подробнее
                   </button>
@@ -475,6 +668,15 @@ const ProfilePage = () => {
               Забронированные варианты
             </h2>
             {renderReservedProperties()}
+          </div>
+        );
+      case "favorites":
+        return (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Избранные объекты
+            </h2>
+            {renderFavoriteProperties()}
           </div>
         );
       case "client-service":
