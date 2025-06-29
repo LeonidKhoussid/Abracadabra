@@ -13,7 +13,7 @@ domli/
 │
 │
 │
-├── db_connector/              	   # === Связь с БД ===
+├── db_connector/              	   # === БД PostgreSQL ===
 │   ├── __init__.py
 │   ├── engine.py 		   # Получение / возврат соединений
 │   ├── extractor.py 		   # SQL запросы + таблицы
