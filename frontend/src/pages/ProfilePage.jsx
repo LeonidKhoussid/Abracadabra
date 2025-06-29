@@ -4,7 +4,9 @@ import { useAuth } from "../context/AuthContext";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Toast from "../components/Toast";
-import apiService, { reservationService } from "../services/api";
+import apiService, { ReservationService } from "../services/api";
+
+const reservationService = new ReservationService();
 
 const ProfilePage = () => {
   const navigate = useNavigate();

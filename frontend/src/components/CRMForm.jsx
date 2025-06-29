@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import bitrixService from '../services/bitrix';
-import { reservationService } from '../services/api';
+import { ReservationService } from '../services/api';
 import Toast from './Toast';
+
+const reservationService = new ReservationService();
 
 const CRMForm = ({ isOpen, onClose, propertyData = {}, userData = null, isAuthenticated = false }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);

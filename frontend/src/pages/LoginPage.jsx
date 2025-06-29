@@ -12,15 +12,20 @@ function LoginPage() {
   const [loginErrors, setLoginErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { login, register, error, clearError, isAuthenticated } = useAuth();
+  const { login, register, error, clearError, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/');
+    if (isAuthenticated && user) {
+      // Redirect admin users to admin panel, regular users to home
+      if (user.isAdmin) {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   // Clear error when switching between login/register
   useEffect(() => {
@@ -61,7 +66,8 @@ function LoginPage() {
       try {
         const result = await login(loginData);
         if (result.success) {
-          navigate('/');
+          // Navigation will be handled by the useEffect hook above
+          // based on the user's role (admin or regular user)
         } else {
           setLoginErrors({ general: result.message });
         }
@@ -162,6 +168,15 @@ function LoginPage() {
             Зарегистрироваться
           </button>
         </p>
+      </div>
+
+      {/* Admin Login Info */}
+      <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <h4 className="text-sm font-medium text-blue-800 mb-2">Для администраторов:</h4>
+        <div className="text-xs text-blue-600 space-y-1">
+          <p><strong>Админ:</strong> admin@domli.ru / domli2024!</p>
+          <p><strong>Менеджер:</strong> manager@domli.ru / manager2024!</p>
+        </div>
       </div>
     </div>
   );

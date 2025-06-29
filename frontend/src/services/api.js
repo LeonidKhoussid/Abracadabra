@@ -175,6 +175,156 @@ class ApiService {
     return this.handleResponse(response);
   }
 
+  // Admin methods
+  async getAllUsers() {
+    const response = await fetch(`${this.baseURL}/admin/users`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async updateUserStatus(userId, status) {
+    const response = await fetch(`${this.baseURL}/admin/users/${userId}/status`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ status })
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async updateUserRole(userId, role) {
+    const response = await fetch(`${this.baseURL}/admin/users/${userId}/role`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ role })
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async deleteUser(userId) {
+    const response = await fetch(`${this.baseURL}/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
+  }
+
+  // Admin property management
+  async createProperty(propertyData) {
+    const response = await fetch(`${this.baseURL}/admin/properties`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(propertyData)
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async updateProperty(propertyId, propertyData) {
+    const response = await fetch(`${this.baseURL}/admin/properties/${propertyId}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(propertyData)
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async deleteProperty(propertyId) {
+    const response = await fetch(`${this.baseURL}/admin/properties/${propertyId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
+  }
+
+  // Admin settings
+  async getSystemSettings() {
+    const response = await fetch(`${this.baseURL}/admin/settings`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async updateSystemSettings(settings) {
+    const response = await fetch(`${this.baseURL}/admin/settings`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(settings)
+    });
+
+    return this.handleResponse(response);
+  }
+
+  // Admin analytics and statistics
+  async getStatistics() {
+    const response = await fetch(`${this.baseURL}/admin/statistics`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async getPropertyRatings() {
+    const response = await fetch(`${this.baseURL}/admin/property-ratings`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
+  }
+
+  // Admin maintenance
+  async createBackup() {
+    const response = await fetch(`${this.baseURL}/admin/backup`, {
+      method: 'POST',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async exportData(dataType) {
+    const response = await fetch(`${this.baseURL}/admin/export/${dataType}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    // Return blob for file download
+    return response.blob();
+  }
+
+  async clearCache() {
+    const response = await fetch(`${this.baseURL}/admin/clear-cache`, {
+      method: 'POST',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async getSystemStatus() {
+    const response = await fetch(`${this.baseURL}/admin/system-status`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
+  }
+
   // Utility methods
   isAuthenticated() {
     return !!localStorage.getItem('token');
@@ -225,79 +375,51 @@ class ReservationService {
     return data;
   }
 
-  // Get user's reservations
   async getUserReservations() {
-    try {
-      const response = await fetch(`${this.baseURL}/reservations/user`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
-      });
-      return this.handleResponse(response);
-    } catch (error) {
-      console.error('Error fetching user reservations:', error);
-      throw error;
-    }
+    const response = await fetch(`${this.baseURL}/reservations`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
   }
 
-  // Create a new reservation
   async createReservation(propertyId, notes = '') {
-    try {
-      const response = await fetch(`${this.baseURL}/reservations`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({
-          property_id: propertyId,
-          notes: notes
-        })
-      });
-      return this.handleResponse(response);
-    } catch (error) {
-      console.error('Error creating reservation:', error);
-      throw error;
-    }
+    const response = await fetch(`${this.baseURL}/reservations`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ propertyId, notes })
+    });
+
+    return this.handleResponse(response);
   }
 
-  // Cancel reservation by ID
   async cancelReservation(reservationId) {
-    try {
-      const response = await fetch(`${this.baseURL}/reservations/${reservationId}`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders()
-      });
-      return this.handleResponse(response);
-    } catch (error) {
-      console.error('Error cancelling reservation:', error);
-      throw error;
-    }
+    const response = await fetch(`${this.baseURL}/reservations/${reservationId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
   }
 
-  // Cancel reservation by property ID
   async cancelReservationByProperty(propertyId) {
-    try {
-      const response = await fetch(`${this.baseURL}/reservations/property/${propertyId}`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders()
-      });
-      return this.handleResponse(response);
-    } catch (error) {
-      console.error('Error cancelling reservation by property:', error);
-      throw error;
-    }
+    const response = await fetch(`${this.baseURL}/reservations/property/${propertyId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
   }
 
-  // Check if property is reserved by user
   async checkReservationStatus(propertyId) {
-    try {
-      const response = await fetch(`${this.baseURL}/reservations/check/${propertyId}`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
-      });
-      return this.handleResponse(response);
-    } catch (error) {
-      console.error('Error checking reservation status:', error);
-      throw error;
-    }
+    const response = await fetch(`${this.baseURL}/reservations/status/${propertyId}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse(response);
   }
 }
 
-export const reservationService = new ReservationService(); 
+export { ReservationService }; 
