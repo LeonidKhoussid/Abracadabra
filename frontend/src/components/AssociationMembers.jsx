@@ -1,67 +1,64 @@
 const members = [
   {
     name: 'ССК',
-    url: 'https://ssk.ru',
+    url: 'https://erzrf.ru/zastroyschiki/brand/gruppa-kompanij-ssk-5360409001?organizationId=5360409001&region=vse-regiony&regionKey=0&costType=1',
   },
   {
     name: 'AVA GROUP',
-    url: 'https://ava-group.ru',
+    url: 'https://erzrf.ru/zastroyschiki/brand/ava-group-5369340001?organizationId=5369340001&region=vse-regiony&regionKey=0&costType=1',
   },
   {
     name: 'Инсити Девелопмент',
-    url: 'https://incity.ru',
+    url: 'https://erzrf.ru/zastroyschiki/brand/gruppa-kompanij-insiti-5696575001?organizationId=5696575001&region=vse-regiony&regionKey=0&costType=1',
   },
   {
     name: 'ТОЧНО',
-    url: 'https://tochno.ru',
+    url: 'https://erzrf.ru/zastroyschiki/brand/gruppa-kompanij-tochno-2894925001?organizationId=2894925001&region=vse-regiony&regionKey=0&costType=1',
   },
-  {
-    name: 'Семья',
-    url: 'https://semya.ru',
-  },
+
   {
     name: 'DOGMA',
-    url: 'https://dogma.ru',
+    url: 'https://erzrf.ru/zastroyschiki/brand/dogma-5699998001?organizationId=5699998001&region=vse-regiony&regionKey=0&costType=1',
   },
   {
     name: 'ПОБЕДА',
-    url: 'https://pobeda.ru',
+    url: 'https://erzrf.ru/zastroyschiki/brand/gruppa-kompanij-pobeda-5694337001?organizationId=5694337001&region=vse-regiony&regionKey=0&costType=1',
   },
   {
     name: 'ДЕСО',
-    url: 'https://deso.ru',
+    url: 'https://erzrf.ru/zastroyschiki/brand/gruppa-kompanij-metropolis-7611848001?organizationId=7611848001&region=vse-regiony&regionKey=0&costType=1',
   },
   {
     name: 'НЕОМЕТРИЯ',
-    url: 'https://neometria.ru',
+    url: 'https://erzrf.ru/zastroyschiki/brand/neometrija-1734816001?organizationId=1734816001&region=vse-regiony&regionKey=0&costType=1',
   },
   {
     name: 'АФК',
-    url: 'https://afk.ru',
+    url: 'https://erzrf.ru/zastroyschiki/brand/gruppa-kompanij-afk-18554659001?organizationId=18554659001&region=vse-regiony&regionKey=0&costType=1',
   },
   {
     name: 'ДЕВЕЛОПМЕНТ ЮГ',
-    url: 'https://development-yug.ru',
+    url: 'https://erzrf.ru/zastroyschiki/brand/stroitelno-investicionnaja-korporacija-development-jug-1459022001?organizationId=1459022001&region=vse-regiony&regionKey=0&costType=1',
   },
   {
     name: 'ART GROUP',
-    url: 'https://art-group.ru',
+    url: 'https://erzrf.ru/zastroyschiki/brand/gruppa-kompanij-art-grupp-5728155001?organizationId=5728155001&region=vse-regiony&regionKey=0&costType=1',
   },
   {
     name: 'ЕВРОПЕЯ',
-    url: 'https://europa.ru',
+    url: 'https://erzrf.ru/zastroyschiki/brand/gruppa-kompanij-evropeja-1708756001?organizationId=1708756001&region=vse-regiony&regionKey=0&costType=1',
   },
   {
     name: 'ЛЕНДЕКС',
-    url: 'https://lendex.ru',
+    url: 'https://erzrf.ru/zastroyschiki/brand/gruppa-kompanij-lendeks-24528790001?organizationId=24528790001&region=vse-regiony&regionKey=0&costType=1',
   },
   {
     name: 'БЭЛ Девелопмент',
-    url: 'https://bel-development.ru',
+    url: 'https://erzrf.ru/zastroyschiki/brand/bel-development-4368787001?organizationId=4368787001&region=vse-regiony&regionKey=0&costType=1',
   },
   {
     name: 'LIVINGSTON',
-    url: 'https://livingston.ru',
+    url: 'https://erzrf.ru/zastroyschiki/ooo-specializirovannyj-zastrojshhik-gostinichnyj-kompleks-sochiojlstroj-23210710001?region=Krasnodarskiy-kray&regionKey=143001001&costType=1&sortType=qrooms&organizationId=23210710001',
   }
 ];
 

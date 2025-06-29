@@ -1,285 +1,143 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import api, { reservationService } from '../services/api';
-import Toast from './Toast';
+import { useAuth } from '../context/AuthContext.jsx';
+import api from '../services/api';
+
+// Default properties to show when user is not logged in or no recommendations found
+const defaultProperties = [
+  {
+    id: 'default-1',
+    title: 'ЖК "Тёплые края"',
+    address: 'г. Краснодар, ул. им. Александра Гикало, д. 11',
+    type: 'Квартиры',
+    price: 'от 6,3 млн ₽',
+    img: 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=400&q=80',
+    developer: 'СЕМЬЯ'
+  },
+  {
+    id: 'default-2',
+    title: 'ЖК "Режиссёр"',
+    address: 'г. Краснодар, ул. Старокубанская, д. 100/6',
+    type: 'Квартиры',
+    price: 'от 7,2 млн ₽',
+    img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=400&q=80',
+    developer: 'Ava Dom'
+  },
+  {
+    id: 'default-3',
+    title: 'ЖК "Сегодня"',
+    address: 'г. Краснодар, ул. Ветеранов, д. 85',
+    type: 'Квартиры',
+    price: 'от 5,9 млн ₽',
+    img: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=400&q=80',
+    developer: 'ССК'
+  }
+];
 
 export default function Recommendations() {
-  const [properties, setProperties] = useState([]);
-  const [filteredProperties, setFilteredProperties] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [properties, setProperties] = useState(defaultProperties);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [showAll, setShowAll] = useState(false);
-  const [favoritedProperties, setFavoritedProperties] = useState(new Set());
-  const [favoritingProperties, setFavoritingProperties] = useState(new Set());
-  const [toasts, setToasts] = useState([]);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchRecommendations();
-  }, [isAuthenticated]);
+  // Handle card click navigation
+  const handleCardClick = (property) => {
+    if (property.id) {
+      navigate(`/property/${property.id}`);
+    } else {
+      // For default properties without IDs, we could navigate to a search or show a message
+      console.log('Property ID not available for navigation');
+    }
+  };
 
+  // Format property data from backend response
+  const formatProperty = (property) => ({
+    id: property.id,
+    title: property.name,
+    address: property.address,
+    type: property.property_type,
+    price: property.formatted_price,
+    img: property.main_photo_url || property.gallery_photos_urls?.[0] || 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=400&q=80',
+    developer: property.developer,
+    rooms: property.rooms,
+    area: property.area,
+    completion: property.completion_date,
+    status: property.status
+  });
+
+  // Main function to fetch recommendations
   const fetchRecommendations = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-      setError(null);
-      
       let response;
+      let success = false;
+
       if (isAuthenticated) {
         // Try to get personalized recommendations first
         try {
           response = await api.getPersonalizedRecommendations();
-        } catch (authError) {
-          // If personalized fails, fall back to general recommendations
-          console.warn('Personalized recommendations failed, falling back to general:', authError);
-          response = await api.getRecommendations();
+          if (response.success && response.data?.recommendations) {
+            const formattedProperties = response.data.recommendations
+              .slice(0, 6)
+              .map(formatProperty);
+            setProperties(formattedProperties);
+            success = true;
+          }
+        } catch (error) {
+          console.error('Error fetching personalized recommendations:', error);
         }
-      } else {
-        // Get general recommendations for non-authenticated users
-        response = await api.getRecommendations();
       }
 
-      if (response.success && response.data.recommendations) {
-        setProperties(response.data.recommendations);
-        setFilteredProperties(response.data.recommendations);
+      // If not authenticated or personalized recommendations failed, get general recommendations
+      if (!success) {
+        try {
+          response = await api.getRecommendations();
+          if (response.success && response.data?.recommendations) {
+            const formattedProperties = response.data.recommendations
+              .slice(0, 6)
+              .map(formatProperty);
+            setProperties(formattedProperties);
+            success = true;
+          }
+        } catch (error) {
+          console.error('Error fetching general recommendations:', error);
+        }
       }
-    } catch (err) {
-      console.error('Error fetching recommendations:', err);
+
+      // If all API calls fail, use default properties
+      if (!success) {
+        setProperties(defaultProperties);
+        setError('Не удалось загрузить рекомендации. Показаны популярные объекты.');
+      }
+
+    } catch (error) {
+      console.error('Error in fetchRecommendations:', error);
       setError('Не удалось загрузить рекомендации');
+      setProperties(defaultProperties);
     } finally {
       setLoading(false);
     }
   };
 
-  const getDefaultImage = () => 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=400&q=80';
-
-  const handlePropertyClick = (propertyId) => {
-    navigate(`/property/${propertyId}`);
-  };
-
-  // Toast functions
-  const showToast = (message, type = 'success') => {
-    const id = Date.now();
-    const newToast = { id, message, type };
-    setToasts(prev => [...prev, newToast]);
-  };
-
-  const removeToast = (id) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  };
-
-  // Check which properties are favorited when component loads
   useEffect(() => {
-    const checkFavorites = async () => {
-      if (!isAuthenticated || properties.length === 0) return;
-      
-      try {
-        // Get user's reservations and find favorites (those with "Избранное:" prefix in notes)
-        const response = await reservationService.getUserReservations();
-        
-        if (response.success) {
-          const favorited = new Set();
-          response.reservations.forEach(reservation => {
-            if (reservation.notes && reservation.notes.startsWith('Избранное:')) {
-              favorited.add(reservation.property_id);
-            }
-          });
-          setFavoritedProperties(favorited);
-        }
-      } catch (error) {
-        console.error('Error checking favorites status:', error);
-      }
-    };
-
-    checkFavorites();
-  }, [isAuthenticated, properties]);
-
-  // Handle favorite toggle
-  const handleFavoriteToggle = async (e, property) => {
-    e.stopPropagation(); // Prevent property card click
-    
-    if (!isAuthenticated) {
-      showToast('Для добавления в избранное необходимо войти в систему', 'error');
-      navigate('/login');
-      return;
-    }
-
-    const propertyId = property.id;
-    const isFavorited = favoritedProperties.has(propertyId);
-    
-    if (isFavorited) {
-      // Remove from favorites
-      setFavoritingProperties(prev => new Set(prev).add(propertyId));
-      
-      try {
-        const response = await reservationService.cancelReservationByProperty(propertyId);
-        
-        if (response.success) {
-          setFavoritedProperties(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(propertyId);
-            return newSet;
-          });
-          showToast(`"${property.name}" удален из избранного`, 'success');
-        } else {
-          throw new Error(response.error || 'Ошибка при удалении из избранного');
-        }
-      } catch (error) {
-        console.error('Error removing from favorites:', error);
-        showToast(error.message || 'Ошибка при удалении из избранного', 'error');
-      } finally {
-        setFavoritingProperties(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(propertyId);
-          return newSet;
-        });
-      }
-    } else {
-      // Add to favorites
-      setFavoritingProperties(prev => new Set(prev).add(propertyId));
-      
-      try {
-        const response = await reservationService.createReservation(
-          propertyId, 
-          `Избранное: добавлено в избранное пользователем`
-        );
-        
-        if (response.success) {
-          setFavoritedProperties(prev => new Set(prev).add(propertyId));
-          showToast(`"${property.name}" добавлен в избранное`, 'success');
-        } else {
-          throw new Error(response.error || 'Ошибка при добавлении в избранное');
-        }
-      } catch (error) {
-        console.error('Error adding to favorites:', error);
-        showToast(error.message || 'Ошибка при добавлении в избранное', 'error');
-      } finally {
-        setFavoritingProperties(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(propertyId);
-          return newSet;
-        });
-      }
-    }
-  };
-
-  const filterProperties = (status) => {
-    setActiveFilter(status);
-    setShowAll(false); // Reset show all when filter changes
-    
-    if (status === 'all') {
-      setFilteredProperties(properties);
-    } else {
-      const filtered = properties.filter(property => {
-        const propertyStatus = property.status || property.deadline || 'В продаже';
-        
-        switch (status) {
-          case 'completed':
-            return propertyStatus === 'Сдан' || propertyStatus === 'completed';
-          case 'for-sale':
-            return propertyStatus === 'В продаже' || propertyStatus === 'for-sale' || !propertyStatus;
-          case 'construction':
-            return propertyStatus === 'Котлован' || propertyStatus === 'construction' || propertyStatus.includes('строительство');
-          default:
-            return true;
-        }
-      });
-      setFilteredProperties(filtered);
-    }
-  };
-
-  // Get properties to display (limited or all)
-  const getDisplayProperties = () => {
-    if (showAll || filteredProperties.length <= 10) {
-      return filteredProperties;
-    }
-    return filteredProperties.slice(0, 10);
-  };
-
-  const displayProperties = getDisplayProperties();
-  const hasMoreProperties = filteredProperties.length > 10 && !showAll;
-
-  const getStatusBadge = (property) => {
-    const status = property.status || property.deadline || 'В продаже';
-    
-    let badgeClass = 'px-2 py-1 text-xs rounded-full font-medium ';
-    let statusText = status;
-    
-    if (status === 'Сдан' || status === 'completed') {
-      badgeClass += 'bg-green-100 text-green-800';
-      statusText = 'Сдан';
-    } else if (status === 'Котлован' || status === 'construction' || status.includes('строительство')) {
-      badgeClass += 'bg-yellow-100 text-yellow-800';
-      statusText = 'Котлован';
-    } else {
-      badgeClass += 'bg-blue-100 text-blue-800';
-      statusText = 'В продаже';
-    }
-    
-    return <span className={badgeClass}>{statusText}</span>;
-  };
+    fetchRecommendations();
+  }, [isAuthenticated, user]);
 
   if (loading) {
     return (
-      <section className="px-8 py-8">
-        <h2 className="text-2xl font-bold mb-4">
-          {isAuthenticated ? 'Рекомендации для вас' : 'Могут подойти'}
-        </h2>
-        
-        {/* Filter Buttons */}
-        <div className="flex gap-2 mb-6 flex-wrap">
-          <button
-            onClick={() => filterProperties('all')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeFilter === 'all'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            Все
-          </button>
-          <button
-            onClick={() => filterProperties('for-sale')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeFilter === 'for-sale'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            В продаже
-          </button>
-          <button
-            onClick={() => filterProperties('construction')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeFilter === 'construction'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            Котлован
-          </button>
-          <button
-            onClick={() => filterProperties('completed')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeFilter === 'completed'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            Сдан
-          </button>
-        </div>
-        
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-          {[...Array(10)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl shadow p-4 min-w-[250px] flex-shrink-0 animate-pulse">
-              <div className="bg-gray-300 rounded-lg mb-2 w-full h-40"></div>
-              <div className="bg-gray-300 h-4 rounded mb-2"></div>
-              <div className="bg-gray-300 h-3 rounded mb-1"></div>
-              <div className="bg-gray-300 h-3 rounded mb-1"></div>
-              <div className="bg-gray-300 h-4 rounded"></div>
+      <section className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <h2 className="text-xl sm:text-2xl font-bold mb-4">Загружаем рекомендации...</h2>
+        <div className="flex gap-4 overflow-x-auto pb-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-gray-200 rounded-xl animate-pulse p-4 min-w-[260px] sm:min-w-[280px] flex-shrink-0">
+              <div className="bg-gray-300 rounded-lg mb-2 w-full h-36 sm:h-40"></div>
+              <div className="bg-gray-300 rounded h-4 mb-2"></div>
+              <div className="bg-gray-300 rounded h-3 mb-1"></div>
+              <div className="bg-gray-300 rounded h-3 mb-1"></div>
+              <div className="bg-gray-300 rounded h-4"></div>
             </div>
           ))}
         </div>
@@ -287,212 +145,99 @@ export default function Recommendations() {
     );
   }
 
-  if (error) {
-    return (
-      <section className="px-8 py-8">
-        <h2 className="text-2xl font-bold mb-4">
-          {isAuthenticated ? 'Рекомендации для вас' : 'Могут подойти'}
-        </h2>
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+  return (
+    <section className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4">
+        {isAuthenticated ? 'Рекомендации для вас' : 'Популярные объекты'}
+      </h2>
+      
+      {error && (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-3 py-2 sm:px-4 sm:py-3 rounded mb-4 text-sm sm:text-base">
           {error}
         </div>
-      </section>
-    );
-  }
+      )}
 
-  return (
-    <section className="px-8 py-8">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">
-          {isAuthenticated ? 'Рекомендации для вас' : 'Могут подойти'}
-        </h2>
-        {properties.length > 0 && (
-          <span className="text-gray-600 text-sm">
-            {filteredProperties.length} из {properties.length} объектов
-          </span>
-        )}
-      </div>
-      
-      {/* Filter Buttons */}
-      <div className="flex gap-2 mb-6 flex-wrap">
-        <button
-          onClick={() => filterProperties('all')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeFilter === 'all'
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-          }`}
-        >
-          Все
-        </button>
-        <button
-          onClick={() => filterProperties('for-sale')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeFilter === 'for-sale'
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-          }`}
-        >
-          В продаже
-        </button>
-        <button
-          onClick={() => filterProperties('construction')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeFilter === 'construction'
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-          }`}
-        >
-          Котлован
-        </button>
-        <button
-          onClick={() => filterProperties('completed')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeFilter === 'completed'
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-          }`}
-        >
-          Сдан
-        </button>
-      </div>
-      
-      <div className={!showAll ? "relative" : ""}>
-        <div className={showAll ? 
-          "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" : 
-          "flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
-        }>
-          {displayProperties.map((property, i) => {
-            const isFavorited = favoritedProperties.has(property.id);
-            const isFavoriting = favoritingProperties.has(property.id);
-            
-            return (
-              <div 
-                key={property.id || i} 
-                className={`bg-white rounded-xl shadow p-4 hover:shadow-lg transition-shadow duration-200 ${
-                  !showAll ? 'min-w-[250px] flex-shrink-0' : ''
-                }`}
-              >
-                <div className="relative">
-                  <img 
-                    src={property.main_photo_url || getDefaultImage()} 
-                    alt={property.name} 
-                    className="rounded-lg mb-2 w-full h-40 object-cover cursor-pointer"
-                    onClick={() => handlePropertyClick(property.id)}
-                    onError={(e) => {
-                      e.target.src = getDefaultImage();
-                    }}
-                  />
-                  <div className="absolute top-2 right-2">
-                    {getStatusBadge(property)}
-                  </div>
-                  {/* Heart icon for favorites */}
-                  {isAuthenticated && (
-                    <button
-                      onClick={(e) => handleFavoriteToggle(e, property)}
-                      disabled={isFavoriting}
-                      className={`absolute top-2 left-2 p-1.5 rounded-full transition-all duration-200 ${
-                        isFavoriting 
-                          ? 'bg-gray-200 cursor-not-allowed' 
-                          : 'bg-white/80 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md'
-                      }`}
-                      title={isFavorited ? 'Удалить из избранного' : 'Добавить в избранное'}
-                    >
-                      {isFavoriting ? (
-                        <div className="w-5 h-5 flex items-center justify-center">
-                          <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                      ) : (
-                        <svg 
-                          className={`w-5 h-5 transition-colors ${
-                            isFavorited 
-                              ? 'text-red-500 fill-current' 
-                              : 'text-gray-600 hover:text-red-500'
-                          }`}
-                          fill={isFavorited ? 'currentColor' : 'none'}
-                          stroke="currentColor" 
-                          strokeWidth="2" 
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                        </svg>
-                      )}
-                    </button>
-                  )}
-                </div>
-                <div 
-                  className="cursor-pointer" 
-                  onClick={() => handlePropertyClick(property.id)}
-                >
-                  <div className="font-semibold text-lg mb-1">{property.name}</div>
-                  <div className="text-gray-500 text-sm mb-1">{property.address}</div>
-                  <div className="text-gray-400 text-xs mb-1">{property.property_type}</div>
-                  <div className="font-bold text-blue-700 mb-3">{property.formatted_price}</div>
-                </div>
-                
-                <button
-                  onClick={() => handlePropertyClick(property.id)}
-                  className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                >
-                  Подробнее
-                </button>
+      <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
+        {properties.map((property, i) => (
+          <div 
+            key={property.id || i} 
+            className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-3 sm:p-4 min-w-[240px] sm:min-w-[280px] max-w-[240px] sm:max-w-[280px] flex-shrink-0 cursor-pointer hover:scale-105 transform group"
+            onClick={() => handleCardClick(property)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleCardClick(property);
+              }
+            }}
+          >
+            <div className="relative w-full h-32 sm:h-40 mb-3 overflow-hidden rounded-lg bg-gray-100">
+              <img 
+                src={property.img} 
+                alt={property.title} 
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                onError={(e) => {
+                  e.target.src = 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=400&q=80';
+                }}
+              />
+            </div>
+            <div className="font-semibold text-base sm:text-lg mb-2 text-gray-800">{property.title}</div>
+            <div className="text-gray-600 text-xs sm:text-sm mb-1 flex items-center">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+              </svg>
+              {property.address}
+            </div>
+            <div className="text-gray-500 text-xs mb-1">{property.type}</div>
+            {property.rooms && property.rooms > 0 && (
+              <div className="text-gray-500 text-xs mb-1">
+                {property.rooms === 1 ? '1 комната' : `${property.rooms} комнаты`}
               </div>
-            );
-          })}
-        </div>
-        
-        {/* Fade indicator for horizontal scroll */}
-        {!showAll && hasMoreProperties && (
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#f8fbff] to-transparent pointer-events-none"></div>
-        )}
+            )}
+            {property.area && property.area > 0 && (
+              <div className="text-gray-500 text-xs mb-1">{property.area} м²</div>
+            )}
+            <div className="text-gray-500 text-xs mb-2">{property.developer}</div>
+            {property.completion && (
+              <div className="text-gray-500 text-xs mb-2">
+                Сдача: {property.completion}
+              </div>
+            )}
+            {property.status && (
+              <div className="text-gray-500 text-xs mb-3">
+                <span className={`inline-block px-2 py-1 rounded text-xs ${
+                  property.status === 'Сдан' ? 'bg-green-100 text-green-800' :
+                  property.status === 'В продаже' ? 'bg-blue-100 text-blue-800' :
+                  'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {property.status}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <div className="font-bold text-blue-700 text-base sm:text-lg">{property.price}</div>
+              <div className="text-blue-600 text-xs sm:text-sm font-medium opacity-70 group-hover:opacity-100 transition-opacity">
+                Подробнее →
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
-      
-      {hasMoreProperties && (
-        <div className="text-center mt-4">
-          <p className="text-gray-500 text-sm mb-3">
-            Листайте влево, чтобы увидеть больше вариантов
+
+      {!isAuthenticated && (
+        <div className="mt-4 text-center">
+          <p className="text-gray-600 text-xs sm:text-sm mb-2">
+            Зарегистрируйтесь, чтобы получить персональные рекомендации
           </p>
-          <button
-            onClick={() => setShowAll(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          <button 
+            onClick={() => window.location.href = '/login'}
+            className="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Показать все ({filteredProperties.length} объектов)
+            Зарегистрироваться
           </button>
         </div>
       )}
-      
-      {showAll && filteredProperties.length > 10 && (
-        <div className="text-center mt-6">
-          <button
-            onClick={() => setShowAll(false)}
-            className="bg-gray-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-600 transition-colors"
-          >
-            Свернуть (показать 10)
-          </button>
-        </div>
-      )}
-      
-      {filteredProperties.length === 0 && properties.length > 0 && (
-        <div className="text-center text-gray-500 py-8">
-          По выбранному фильтру объекты не найдены
-        </div>
-      )}
-      {properties.length === 0 && (
-        <div className="text-center text-gray-500 py-8">
-          Рекомендации не найдены
-        </div>
-      )}
-      
-      {/* Toast notifications */}
-      {toasts.map((toast) => (
-        <Toast
-          key={toast.id}
-          message={toast.message}
-          type={toast.type}
-          duration={3000}
-          onClose={() => removeToast(toast.id)}
-        />
-      ))}
     </section>
   );
 } 

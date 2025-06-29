@@ -55,7 +55,8 @@ export default function MapSection() {
     // Initialize map without default attribution control
     // Center on Krasnodar instead of Krasnoyarsk
     const map = L.map(mapRef.current, {
-      attributionControl: false
+      attributionControl: false,
+      zoomControl: window.innerWidth > 768 // Hide zoom control on mobile
     }).setView([45.0355, 38.9753], 11); // Krasnodar coordinates
     mapInstanceRef.current = map;
 
@@ -82,8 +83,8 @@ export default function MapSection() {
       
       const popupContent = `
         <div class="property-popup max-w-xs">
-          <h3 class="font-bold text-lg mb-2 text-blue-800">${property.name}</h3>
-          <div class="space-y-1 text-sm">
+          <h3 class="font-bold text-base sm:text-lg mb-2 text-blue-800">${property.name}</h3>
+          <div class="space-y-1 text-xs sm:text-sm">
             <p class="text-gray-700"><strong>Адрес:</strong> ${property.address}</p>
             <p class="text-green-600 font-semibold"><strong>Цена:</strong> ${property.price}</p>
             <p class="text-gray-600"><strong>Тип:</strong> ${property.type}</p>
@@ -94,7 +95,7 @@ export default function MapSection() {
             <p class="text-gray-600"><strong>Сдача:</strong> ${property.completion}</p>
           </div>
           <button 
-            class="mt-3 w-full bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 transition-colors property-detail-btn" 
+            class="mt-3 w-full bg-blue-500 text-white px-3 py-2 rounded text-xs sm:text-sm hover:bg-blue-600 transition-colors property-detail-btn" 
             data-property-id="${property.id}"
           >
             Подробнее
@@ -103,7 +104,7 @@ export default function MapSection() {
       `;
       
       const popup = L.popup({
-        maxWidth: 300,
+        maxWidth: window.innerWidth > 640 ? 300 : 250,
         className: 'custom-popup'
       }).setContent(popupContent);
       
@@ -132,25 +133,25 @@ export default function MapSection() {
         mapInstanceRef.current.remove();
       }
     };
-  }, [properties, loading]);
+  }, [properties, loading, navigate]);
 
   if (loading) {
     return (
-      <section className="px-8 py-12 bg-white">
+      <section className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 sm:mb-4">
               Карта новостроек
             </h2>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
               Загружаем данные о недвижимости...
             </p>
           </div>
           <div className="rounded-xl overflow-hidden shadow-lg border border-gray-200">
-            <div className="w-full h-96 bg-gray-100 flex items-center justify-center">
+            <div className="w-full h-64 sm:h-80 md:h-96 bg-gray-100 flex items-center justify-center">
               <div className="flex items-center space-x-2">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                <div className="text-gray-500">Загрузка карты...</div>
+                <div className="text-gray-500 text-sm sm:text-base">Загрузка карты...</div>
               </div>
             </div>
           </div>
@@ -161,22 +162,22 @@ export default function MapSection() {
 
   if (error) {
     return (
-      <section className="px-8 py-12 bg-white">
+      <section className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 sm:mb-4">
               Карта новостроек
             </h2>
-            <p className="text-red-600 text-lg max-w-2xl mx-auto">
+            <p className="text-red-600 text-base sm:text-lg max-w-2xl mx-auto">
               Ошибка загрузки данных: {error}
             </p>
           </div>
           <div className="rounded-xl overflow-hidden shadow-lg border border-gray-200">
-            <div className="w-full h-96 bg-gray-100 flex items-center justify-center">
+            <div className="w-full h-64 sm:h-80 md:h-96 bg-gray-100 flex items-center justify-center">
               <div className="text-center">
                 <div className="text-red-500 text-xl mb-2">⚠️</div>
-                <div className="text-red-500">Не удалось загрузить карту</div>
-                <div className="text-gray-500 text-sm mt-2">Проверьте подключение к серверу</div>
+                <div className="text-red-500 text-sm sm:text-base">Не удалось загрузить карту</div>
+                <div className="text-gray-500 text-xs sm:text-sm mt-2">Проверьте подключение к серверу</div>
               </div>
             </div>
           </div>
@@ -186,13 +187,13 @@ export default function MapSection() {
   }
 
   return (
-    <section className="px-8 py-12 bg-white">
+    <section className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 bg-white">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 sm:mb-4">
             Карта новостроек Краснодара
           </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-600 text-sm sm:text-lg max-w-2xl mx-auto px-2 sm:px-0">
             Изучите расположение объектов недвижимости на интерактивной карте. 
             Найдите идеальное место для вашего нового дома в Краснодаре.
           </p>
@@ -201,13 +202,13 @@ export default function MapSection() {
         <div className="rounded-xl overflow-hidden shadow-lg border border-gray-200">
           <div 
             ref={mapRef} 
-            className="w-full h-96"
+            className="w-full h-64 sm:h-80 md:h-96"
             style={{ zIndex: 1 }}
           />
         </div>
         
-        <div className="mt-6 text-center">
-          <p className="text-gray-500 text-sm">
+        <div className="mt-4 sm:mt-6 text-center">
+          <p className="text-gray-500 text-xs sm:text-sm">
             Нажмите на маркер для получения подробной информации о проекте
           </p>
           <p className="text-gray-400 text-xs mt-1">

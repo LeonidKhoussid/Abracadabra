@@ -14,7 +14,7 @@ import userRoutes from './routes/users.js';
 import propertyRoutes from './routes/properties.js';
 import photoRoutes from './routes/photos.js';
 import reservationRoutes from './routes/reservations.js';
-import chatRoutes from './routes/chat.js';
+// import chatRoutes from './routes/chat.js';
 
 // Import database connection
 import { pool } from './config/database.js';
@@ -67,7 +67,9 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173',
-  'http://82.97.249.148:5173'
+  'http://82.97.249.148:5173',
+  'http://82.97.249.148',
+  'https://82.97.249.148'
 ];
 
 app.use(cors({
@@ -109,7 +111,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/photos', photoRoutes);
 app.use('/api/reservations', reservationRoutes);
-app.use('/api/chat', chatRoutes);
+// app.use('/api/chat', chatRoutes);
 
 // API documentation endpoint
 app.get('/api', (req, res) => {
@@ -122,7 +124,7 @@ app.get('/api', (req, res) => {
       properties: '/api/properties',
       photos: '/api/photos',
       reservations: '/api/reservations',
-      chat: '/api/chat'
+      // chat: '/api/chat'
     }
   });
 });
