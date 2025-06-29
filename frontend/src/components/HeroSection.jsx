@@ -41,9 +41,6 @@ export default function HeroSection() {
           </div>
           <div className="hero-section__select-group">
             <select className="hero-section__select">
-              <option>Застройщик</option>
-            </select>
-            <select className="hero-section__select">
               <option>Комнатность</option>
             </select>
             <select className="hero-section__select">
