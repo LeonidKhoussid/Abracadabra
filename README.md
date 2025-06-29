@@ -15,43 +15,35 @@
 
 ---
 
-### **Pipeline Overview**
-1. **Speech-to-Text Processing:**
-   - Input is recorded with a silence-based timer to trim pauses and capture only relevant speech.
-   - `UVR-MDX-NET-Inst_HQ_4` performs voice isolation, spectrogram sampling, and upscaling for cleaner signal quality.
-   - `Whisper-medium-v3 ` transcribes the processed audio into accurate multilingual text.
+### **Обзор Пайплайна**
+1. **Преобразование речи в текст:**
+   - Голос записывается с автоматическим обрезанием пауз (таймер «молчания»), чтобы фиксировать только живую речь.
+   - `UVR-MDX-NET-Inst_HQ_4` очищает звук, выделяет голос, делает сэмплинг спектрограммы и повышает качество («апскейлит» сигнал).
+   - `Whisper-medium-v3 ` преобразует полученную аудиодорожку в текст — с поддержкой нескольких языков.
 
-2. **Text Generation Inference:**
-   - Transcribed text is passed to a selected LLaMA, to choose from
-     - `DeepSeek-R1-Distill-Qwen-14B-Q4_0` for quality;
-     - `Meta-Llama-3-8B-Instruct.Q4_0` for speed.
-   - Output is optimized for clarity, factuality, and smooth spoken delivery.
+2. **Генерация ответа на основе текста:**
+   - Распознанный текст передаётся на вход одной из LLaMA моделей
+     - `DeepSeek-R1-Distill-Qwen-14B-Q4_0` - качество;
+     - `Meta-Llama-3-8B-Instruct.Q4_0` - скорость.
+   -  Проверка ответа на галлюцинации, если на прошла - вспоминает историю и обновляет метаданные.
 
-3. **Prompt Engineering and Dialogue Management:**
-   - A dedicated prompt builder sets assistant role, tone, and reply constraints.
-   - Injects cultural context and location-based relevance into each response.
+3. **Модуль с промтами и диалогом:**
+   - Специальный «строитель подсказок» (prompt builder) задаёт роль бота, тон общения и ограничения на длину/форму ответа.
+   - В каждое сообщение автоматически «вкладывается» контекст от пользователя.
    - An example of a real dialogue:
 ```
 | User_input|
 |--------------------------|
-| Привет! Ты знаешь что-нибудь об озере Сукко? Расскажи о нём поподробнее.|
+| Привет! Я хочу подобрать для себя недвижимость. Какие есть предложения и игроки на рынке?|
 
 | Assistant_output|
 |--------------------------|
-| Да, я знаю озеро Сукко! Это уникальное место в Краснодарском крае. Это большое озеро на юге региона, окруженное кипарисовой рощей...|
+| Привет! Я рада помочь вам разобраться в лучших предложениях Ассоциации застройщиков Краснодарского края. АЗКК - это организация, в которую входят...|
 ```
 
-4. **Voice Synthesis:**
-- `XTTS-v2-multi` generates natural multilingual speech with realistic intonation and prosody.
-- Clone any voice from a 3-5s sample and speak in any language using that voice.
-
----
-
-### **Technologies**
-- PyTorch: enabling efficient training and inference, particularly for language understanding and generation.
-- gpt4all: for fine-tuning responses, providing highly coherent and context-aware text generation.
-- TTS: generalizes across accents and tones, enabling high-quality, expressive speech.
-- Onnxruntime: optimizes model performance for cross-platform deployment.
+4. **Синтез речи:**
+- `XTTS-v2-multi` генерирует естественную, «живую» речь с реалистичной интонацией и ритмом, поддерживая несколько языков.
+- Есть «клонирование» голоса, достаточно 3-5 сек. образца и система сможет говорить любым текстом на любом языке этим же голосом.
 
 ---
 
