@@ -14,6 +14,7 @@ import userRoutes from './routes/users.js';
 import propertyRoutes from './routes/properties.js';
 import photoRoutes from './routes/photos.js';
 import reservationRoutes from './routes/reservations.js';
+import chatRoutes from './routes/chat.js';
 
 // Import database connection
 import { pool } from './config/database.js';
@@ -108,6 +109,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/photos', photoRoutes);
 app.use('/api/reservations', reservationRoutes);
+app.use('/api/chat', chatRoutes);
 
 // API documentation endpoint
 app.get('/api', (req, res) => {
@@ -117,7 +119,10 @@ app.get('/api', (req, res) => {
     endpoints: {
       auth: '/api/auth',
       users: '/api/users',
-      properties: '/api/properties'
+      properties: '/api/properties',
+      photos: '/api/photos',
+      reservations: '/api/reservations',
+      chat: '/api/chat'
     }
   });
 });

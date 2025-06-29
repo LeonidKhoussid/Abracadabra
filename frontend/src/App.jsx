@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import PhotoManagement from './pages/PhotoManagement';
 import PropertyDetail from './pages/PropertyDetail';
 import ProfilePage from './pages/ProfilePage';
+import ChatButton from './components/ChatButton';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -50,6 +51,9 @@ function App() {
             } 
           />
         </Routes>
+        
+        {/* AI Chat Button - appears on all pages */}
+        <ChatButton />
       </Router>
     </AuthProvider>
   );
