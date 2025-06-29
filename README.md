@@ -74,9 +74,8 @@ domli/
 │
 │
 │
-├── requirements.txt               # Зависимости
-├── structure.txt                  # Структуры
-│
+├── requirements.txt
+├── structure.txt
 │
 │
 ├── .gitattributes
