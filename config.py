@@ -24,17 +24,17 @@ class BDConfig:
     """КОНФИГУРАЦИЯ ПАРАМЕТРОВ ПОДКЛЮЧЕНИЯ"""
 
     def __init__(self):
-        self.test_raw = "./data/association.csv"
-        self.train_raw = "./data/other_dev.csv"
-        self.output_csv = "./data/server.csv"
+        self.association = "./data/company/association.csv"
+        self.other_dev = "./data/company/other_dev.csv"
+        self.output_csv = "./data/real_estate/objects.csv"
 
         self.db_user = "root"
         self.db_password = "root"
-        self.db_host = "176.113.83.14"
-        self.db_port = 5432
+        self.db_host = "82.97.249.148"
+        self.db_port = 5173
         self.db_name = "ai_data"
 
-        self.post_url = "http://176.113.83.14:3000/ml-result"
+        self.post_url = "http://82.97.249.148:3000/ml-result"
 
         Path(self.test_raw).parent.mkdir(parents=True, exist_ok=True)
         Path(self.train_raw).parent.mkdir(parents=True, exist_ok=True)
@@ -101,7 +101,7 @@ class LlamaGGUFConfig:
     def __init__(
             self,
             model_name: str = "Meta-Llama-3-8B-Instruct.Q4_0.gguf",
-            # DeepSeek-R1-Distill-Qwen-14B-Q4_0 - альтер. модель
+            # DeepSeek-R1-Distill-Qwen-14B-Q4_0 - альтернативная модель
             model_path: str = "./models/meta_llama",
             context_size: int = 8192,
             verbose: bool = False,
